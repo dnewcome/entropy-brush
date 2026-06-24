@@ -161,9 +161,12 @@ hardware. See [ADR 0002](docs/adr/0002-machine-interface-boundary.md) and the
 ## Design docs
 
 Architecture decisions live in [`docs/`](docs/), e.g.
-[ADR 0001: paint representation (grid vs. Gaussian splats)](docs/adr/0001-paint-representation-grid-vs-splats.md).
+[ADR 0001: paint representation (grid vs. Gaussian splats)](docs/adr/0001-paint-representation-grid-vs-splats.md)
+and [ADR 0002: the machine-driver boundary](docs/adr/0002-machine-interface-boundary.md).
 
-See `BRIEF.md` for the original kickoff intent.
+- `BRIEF.md` — the original kickoff intent.
+- [`MODELING.md`](MODELING.md) — how we might learn the brush/paint model from
+  real strokes (and why the robot is the data-collection rig).
 
 ---
 

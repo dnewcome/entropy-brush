@@ -16,3 +16,9 @@ Architecture Decision Records (ADRs) and design notes for entropy-brush.
 
 - [Performance format (`.json`)](interface/performance-format.md) — the machine
   hand-off contract: schema, units, op kinds, driver guidance.
+
+## Research notes
+
+- [`MODELING.md`](../MODELING.md) — learning the brush/paint model from real
+  strokes: what to capture, the force problem, and using the robot as the
+  data-collection rig.
