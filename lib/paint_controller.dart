@@ -392,8 +392,10 @@ class PaintController extends ChangeNotifier {
     if (sm.tz != 0) {
       zoom = (zoom * math.exp(sm.tz * 1.5 * s * dt)).clamp(0.5, 12.0);
     }
-    // Pitch → tiltX, yaw → tiltZ. (Roll unused — the canvas has no roll axis.)
-    tiltX = (tiltX + sm.ry * 1.2 * s * dt).clamp(-0.8, 0.8);
+    // Tilt cap forward/back (pitch = rot about X = rx) → tiltX; twist (yaw =
+    // rot about Z = rz) → tiltY. Roll (ry) is unused — no canvas roll axis.
+    // If an axis feels backwards on your unit, flip its sign here.
+    tiltX = (tiltX + sm.rx * 1.2 * s * dt).clamp(-0.8, 0.8);
     tiltY = (tiltY + sm.rz * 1.2 * s * dt).clamp(-0.8, 0.8);
     if (sm.button0) {
       tiltX = 0;

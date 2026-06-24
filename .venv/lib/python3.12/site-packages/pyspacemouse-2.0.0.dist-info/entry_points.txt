@@ -1,0 +1,2 @@
+[console_scripts]
+pyspacemouse = pyspacemouse.pyspacemouse_cli:main

@@ -116,11 +116,12 @@ python3 tools/hand_tracker.py   # then toggle "Start webcam" in the app
 
 A 3Dconnexion SpaceMouse drives the **view** — translate to pan, push/pull to
 zoom, tilt/twist to orbit — so your non-dominant hand navigates while you paint.
-Same UDP-sidecar pattern:
+Same UDP-sidecar pattern. On Linux it reads from the **spacenavd** daemon's
+socket (stdlib only, no HID permissions needed):
 
 ```bash
-pip install pyspacemouse        # Linux also needs libhidapi + device permission
-python3 tools/spacemouse.py     # then toggle "Start SpaceMouse" in the app
+sudo apt install spacenavd && sudo systemctl enable --now spacenavd
+python3 tools/spacemouse.py     # --debug to watch axes; toggle in the app
 ```
 
 ## Running
