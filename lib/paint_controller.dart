@@ -419,7 +419,7 @@ class PaintController extends ChangeNotifier {
       zoom = (zoom * math.exp(sm.ty * smZoomSpeed * dt)).clamp(0.5, 12.0);
     }
     panX = (panX + sm.tx * smPanSpeed * dt).clamp(-1.5, 1.5);
-    panY = (panY + sm.tz * smPanSpeed * dt).clamp(-1.5, 1.5);
+    panY = (panY - sm.tz * smPanSpeed * dt).clamp(-1.5, 1.5);
     // Rotation: twist (ry) spins the canvas; tilt fwd/back (rx) → tiltX;
     // tilt left/right (rz) → tiltY.
     canvasRoll += sm.ry * smTiltSpeed * dt;

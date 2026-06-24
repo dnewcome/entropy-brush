@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: sm-sens · 06-24 #11',
+            child: const Text('build: sm-panY · 06-24 #12',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
