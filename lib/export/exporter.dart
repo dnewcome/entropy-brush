@@ -5,6 +5,7 @@ import '../render/relief_renderer.dart';
 import '../sim/paint_grid.dart';
 import '../twin/twin_performance.dart';
 import 'glb_export.dart';
+import 'stl_export.dart';
 
 /// Writes PNG (shaded colour) and GLB (relief mesh) assets to a predictable
 /// export folder, returning the paths so the UI can report them.
@@ -41,6 +42,14 @@ class Exporter {
   static Future<String> saveGlb(PaintGrid grid) async {
     final bytes = buildGlb(grid);
     final path = '${exportDir().path}/relief-${_stamp()}.glb';
+    await File(path).writeAsBytes(bytes);
+    return path;
+  }
+
+  /// Build and save the relief as a watertight binary STL. Returns the path.
+  static Future<String> saveStl(PaintGrid grid) async {
+    final bytes = buildStl(grid);
+    final path = '${exportDir().path}/relief-${_stamp()}.stl';
     await File(path).writeAsBytes(bytes);
     return path;
   }

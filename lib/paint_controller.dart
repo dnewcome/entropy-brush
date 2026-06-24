@@ -413,6 +413,7 @@ class PaintController extends ChangeNotifier {
 
   Future<String> exportPng() => Exporter.savePng(grid, renderer!, light);
   Future<String> exportGlb() => Exporter.saveGlb(grid);
+  Future<String> exportStl() => Exporter.saveStl(grid);
 
   Future<String> savePerformance() {
     final p = _lastPerformance;

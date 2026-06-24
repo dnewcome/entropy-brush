@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: scroll+orbit · 06-24 #4',
+            child: const Text('build: stl-export · 06-24 #5',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -425,10 +425,18 @@ class _ControlPanelState extends State<ControlPanel> {
                   child: const Text('GLB'),
                 ),
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => _export(c.exportStl, 'STL'),
+                  child: const Text('STL'),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          const Text('saved to ~/entropy-brush-exports',
+          const Text('GLB = colour mesh · STL = watertight solid (printing)\n'
+              'saved to ~/entropy-brush-exports',
               style: TextStyle(fontSize: 10, color: Colors.white30)),
         ],
       ),
