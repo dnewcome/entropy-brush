@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 
@@ -39,6 +40,26 @@ class PaintController extends ChangeNotifier {
   ReliefRenderer? paletteRenderer;
   bool get rendererReady => renderer?.ready ?? false;
 
+  /// The painting rendered flat to an image; the slab view textures this onto
+  /// its top face. Re-rendered when the canvas or light changes.
+  ui.Image? reliefImage;
+  bool _renderingImage = false;
+
+  /// Canvas slab thickness, as a fraction of the canvas width.
+  double canvasThicknessFrac = 0.06;
+
+  void _requestReliefImage() {
+    final r = renderer;
+    if (r == null || !r.ready || _renderingImage) return;
+    _renderingImage = true;
+    r.renderToImage(grid, light).then((img) {
+      reliefImage?.dispose();
+      reliefImage = img;
+      _renderingImage = false;
+      notifyListeners();
+    });
+  }
+
   // --- view: tilt, zoom, pan ---
   double tiltX = 0.0; // pitch, radians
   double tiltY = 0.0; // yaw, radians
@@ -57,7 +78,7 @@ class PaintController extends ChangeNotifier {
   void applyCanvasTexture() {
     grid.generateCanvasTexture(
         amplitude: canvasAmplitude, scale: canvasScale, seed: _canvasSeed);
-    _requestUpload();
+    _requestReliefImage();
     notifyListeners();
   }
 
@@ -129,6 +150,7 @@ class PaintController extends ChangeNotifier {
       await renderer!.uploadTextures(grid);
       paletteRenderer = await ReliefRenderer.load();
       await paletteRenderer!.uploadTextures(palette);
+      _requestReliefImage();
     } catch (e) {
       rendererError = 'Could not load relief shader: $e\n'
           'Fully restart the app (stop and re-run; hot reload does not '
@@ -215,7 +237,7 @@ class PaintController extends ChangeNotifier {
 
   void clearCanvas() {
     grid.clear();
-    _requestUpload();
+    _requestReliefImage();
   }
 
   // --- palette: mix pigments, then load the brush from the mix ---
@@ -387,8 +409,8 @@ class PaintController extends ChangeNotifier {
     if (sm == null || !sm.active) return false;
     final double s = spaceMouseSpeed;
     // Translation x/y → pan, push/pull z → zoom.
-    panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.0, 1.0);
-    panY = (panY - sm.ty * 0.6 * s * dt).clamp(-1.0, 1.0);
+    panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.5, 1.5);
+    panY = (panY - sm.ty * 0.6 * s * dt).clamp(-1.5, 1.5);
     if (sm.tz != 0) {
       zoom = (zoom * math.exp(sm.tz * 1.5 * s * dt)).clamp(0.5, 12.0);
     }
@@ -435,19 +457,8 @@ class PaintController extends ChangeNotifier {
       }
     }
 
-    if (grid.isDirty) _requestUpload();
+    if (grid.isDirty) _requestReliefImage();
     if (palette.isDirty) _requestPaletteUpload();
-  }
-
-  bool _uploading = false;
-  void _requestUpload() {
-    final r = renderer;
-    if (r == null || _uploading) return;
-    _uploading = true;
-    r.uploadTextures(grid).then((_) {
-      _uploading = false;
-      notifyListeners();
-    });
   }
 
   bool _palUploading = false;
@@ -461,7 +472,10 @@ class PaintController extends ChangeNotifier {
     });
   }
 
-  void lightChanged() => notifyListeners();
+  void lightChanged() {
+    _requestReliefImage();
+    notifyListeners();
+  }
 
   // --- exports ---
 
@@ -524,6 +538,7 @@ class PaintController extends ChangeNotifier {
   void dispose() {
     _camera?.stop();
     _spaceMouse?.stop();
+    reliefImage?.dispose();
     renderer?.dispose();
     paletteRenderer?.dispose();
     super.dispose();

@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: spacemouse · 06-24 #7',
+            child: const Text('build: 3d-slab · 06-24 #8',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -281,12 +281,16 @@ class _ControlPanelState extends State<ControlPanel> {
             c.zoom = v;
             c.viewChanged();
           }),
-          _slider('Pan X', c.panX, -0.6, 0.6, (v) {
+          _slider('Pan X', c.panX, -1.5, 1.5, (v) {
             c.panX = v;
             c.viewChanged();
           }),
-          _slider('Pan Y', c.panY, -0.6, 0.6, (v) {
+          _slider('Pan Y', c.panY, -1.5, 1.5, (v) {
             c.panY = v;
+            c.viewChanged();
+          }),
+          _slider('Canvas thickness', c.canvasThicknessFrac, 0.0, 0.2, (v) {
+            c.canvasThicknessFrac = v;
             c.viewChanged();
           }),
           Align(
