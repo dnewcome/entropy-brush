@@ -122,13 +122,23 @@ flutter run -d linux            # or macos / windows
 A visible **build tag** in the top-left of the control panel tells you which
 build you're running.
 
+## Driving a machine
+
+entropy-brush is the painting + twin tool; the **paintbot hardware is a separate
+project**. The boundary is deliberate: this repo emits a **machine-agnostic
+performance artifact** (the `.json` print) and contains *no* kinematics,
+firmware, or G-code. A machine driver consumes that artifact and owns all
+hardware. See [ADR 0002](docs/adr/0002-machine-interface-boundary.md) and the
+[performance-format contract](docs/interface/performance-format.md).
+
 ## Roadmap
 
 - **Depth-camera arm tracking** → live painting from real arm motion.
-- **G-code emitter** from a `.json` print → dry-run, then paint, on the Shapeoko.
 - **Brush calibration** so the sim predicts the physical brush.
 - Higher-resolution / stroke-vector re-render for infinite-zoom detail
   (see ADR 0001).
+- *(In the separate paintbot project:)* G-code emitter that reads the `.json`
+  performance and drives the machine.
 
 ## Notes
 

@@ -289,7 +289,8 @@ class PaintController extends ChangeNotifier {
   TwinPerformance stopRecording() {
     _recording = false;
     _recClock.stop();
-    final perf = TwinPerformance(grid.width, List<TwinOp>.of(_recOps));
+    final perf =
+        TwinPerformance(grid.width, List<TwinOp>.of(_recOps), sizeMm: exportSizeMm);
     _lastPerformance = perf;
     notifyListeners();
     return perf;

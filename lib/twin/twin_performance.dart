@@ -55,21 +55,41 @@ class TwinOp {
       );
 }
 
-/// A complete recorded painting: the grid it was made on plus the ordered ops.
-/// This is the portable "print" — save it, replay it, or compile it to G-code.
+/// A complete recorded painting — the portable, **machine-agnostic** "print".
+///
+/// This is the hand-off contract to a downstream machine driver (e.g. a separate
+/// paintbot/CNC project). It carries *intent*, not kinematics: where the brush
+/// went, how hard, and in what colour. The driver owns everything hardware
+/// (kinematics, Z/pressure mechanism, paint-well routing, firmware/G-code).
+///
+/// Coordinates ([TwinOp.x],[TwinOp.y]) are in grid cells, 0..[gridSize]. Divide
+/// by [gridSize] for 0..1 normalized canvas coords; multiply by [mmPerCell] for
+/// millimetres. [pressure] is 0..1 (contact force / Z depth — machine-defined).
+/// Reload ops carry the loaded pigment as linear RGB 0..1. See
+/// docs/interface/performance-format.md for the full schema.
 class TwinPerformance {
-  TwinPerformance(this.gridSize, this.ops);
+  TwinPerformance(this.gridSize, this.ops, {this.sizeMm = 0});
 
+  /// Internal sim resolution; op x,y are in cells of this grid.
   final int gridSize;
+
+  /// Intended physical size of the *longer* canvas side, in mm (0 = unspecified,
+  /// the driver picks). A design hint, not a constraint.
+  final double sizeMm;
+
   final List<TwinOp> ops;
 
   double get duration => ops.isEmpty ? 0 : ops.last.t;
   int get strokeCount =>
       ops.where((o) => o.kind == TwinOpKind.down).length;
 
+  /// Millimetres per grid cell, given [sizeMm] (0 if unspecified).
+  double get mmPerCell => sizeMm > 0 ? sizeMm / gridSize : 0;
+
   Map<String, dynamic> toJson() => {
-        'version': 1,
-        'gridSize': gridSize,
+        'format': 'entropy-brush-performance',
+        'version': 2,
+        'canvas': {'gridSize': gridSize, 'sizeMm': sizeMm},
         'ops': ops.map((o) => o.toJson()).toList(),
       };
 
@@ -77,11 +97,18 @@ class TwinPerformance {
 
   factory TwinPerformance.decode(String s) {
     final j = json.decode(s) as Map<String, dynamic>;
+    // v2 nests canvas info; v1 had gridSize at the top level.
+    final canvas = j['canvas'] as Map<String, dynamic>?;
+    final int gridSize =
+        (canvas?['gridSize'] ?? j['gridSize'] ?? 768) as int;
+    final double sizeMm =
+        ((canvas?['sizeMm'] ?? 0) as num).toDouble();
     return TwinPerformance(
-      j['gridSize'] as int,
+      gridSize,
       (j['ops'] as List)
           .map((e) => TwinOp.fromJson(e as Map<String, dynamic>))
           .toList(),
+      sizeMm: sizeMm,
     );
   }
 }
