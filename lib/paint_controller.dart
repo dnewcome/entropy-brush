@@ -423,8 +423,8 @@ class PaintController extends ChangeNotifier {
     // Rotation: twist (ry) spins the canvas; tilt fwd/back (rx) → tiltX;
     // tilt left/right (rz) → tiltY.
     canvasRoll += sm.ry * smTiltSpeed * dt;
-    tiltX = (tiltX + sm.rx * smTiltSpeed * dt).clamp(-0.8, 0.8);
-    tiltY = (tiltY + sm.rz * smTiltSpeed * dt).clamp(-0.8, 0.8);
+    tiltX = (tiltX + sm.rx * smTiltSpeed * dt).clamp(-1.309, 1.309); // up to ~75°
+    tiltY = (tiltY + sm.rz * smTiltSpeed * dt).clamp(-1.309, 1.309); // up to ~75°
     if (sm.button0) {
       tiltX = 0;
       tiltY = 0;

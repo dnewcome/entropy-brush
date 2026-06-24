@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: sm-panY · 06-24 #12',
+            child: const Text('build: tilt-75 · 06-24 #13',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -269,11 +269,11 @@ class _ControlPanelState extends State<ControlPanel> {
 
           const SizedBox(height: 16),
           _heading('View (tilt · zoom · pan)'),
-          _slider('Tilt X (pitch)', c.tiltX, -0.8, 0.8, (v) {
+          _slider('Tilt X (pitch)', c.tiltX, -1.309, 1.309, (v) {
             c.tiltX = v;
             c.viewChanged();
           }),
-          _slider('Tilt Y (yaw)', c.tiltY, -0.8, 0.8, (v) {
+          _slider('Tilt Y (yaw)', c.tiltY, -1.309, 1.309, (v) {
             c.tiltY = v;
             c.viewChanged();
           }),

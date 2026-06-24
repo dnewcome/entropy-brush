@@ -11,7 +11,7 @@ class OrbitGizmo extends StatelessWidget {
 
   final PaintController controller;
 
-  static const double range = 0.8; // max tilt (radians) at the rim
+  static const double range = 1.309; // max tilt (~75°) at the rim
   static const double diameter = 78;
 
   void _set(Offset local) {
