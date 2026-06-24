@@ -48,6 +48,11 @@ def run_js(out):
     axes = [0.0] * 6
     buttons = [0] * 16
     print(f"RAW joystick {path} → {UDP[0]}:{UDP[1]}  (no spacenavd). Ctrl-C to quit.")
+    if os.path.exists("/run/spnav.sock"):
+        print("NOTE: spacenavd is running and grabs the device — js0 will show "
+              "NO motion until you stop it:\n      sudo systemctl stop spacenavd\n"
+              "      (or just drop --js to read via spacenavd instead).",
+              file=sys.stderr)
     with open(path, "rb") as f:
         while True:
             data = f.read(8)
