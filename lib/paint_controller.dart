@@ -67,6 +67,7 @@ class PaintController extends ChangeNotifier {
   double zoom = 1.0;
   double panX = 0.0;
   double panY = 0.0;
+  double canvasRoll = 0.0; // in-plane spin of the canvas (radians)
 
   void viewChanged() => notifyListeners();
 
@@ -408,17 +409,21 @@ class PaintController extends ChangeNotifier {
     final sm = _spaceMouse;
     if (sm == null || !sm.active) return false;
     final double s = spaceMouseSpeed;
-    // Translation x/y → pan, push/pull z → zoom.
-    panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.5, 1.5);
-    panY = (panY - sm.ty * 0.6 * s * dt).clamp(-1.5, 1.5);
-    if (sm.tz != 0) {
-      zoom = (zoom * math.exp(sm.tz * 1.5 * s * dt)).clamp(0.5, 12.0);
+    // SpaceMouse translation:
+    //   push/pull the cap (Y, toward/away)  → zoom
+    //   slide left/right (X)                → pan X
+    //   lift/press the cap (Z, up/down)     → pan Y
+    // Flip any sign below if an axis feels backwards on your unit.
+    if (sm.ty != 0) {
+      zoom = (zoom * math.exp(sm.ty * 1.5 * s * dt)).clamp(0.5, 12.0);
     }
-    // Tilt cap forward/back (pitch = rot about X = rx) → tiltX; twist (yaw =
-    // rot about Z = rz) → tiltY. Roll (ry) is unused — no canvas roll axis.
-    // If an axis feels backwards on your unit, flip its sign here.
+    panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.5, 1.5);
+    panY = (panY + sm.tz * 0.6 * s * dt).clamp(-1.5, 1.5);
+    // Rotation: twist (yaw, rz) spins the canvas flat in its plane; tilting the
+    // cap pitches (rx) and rolls (ry) the slab in 3D to show the edges.
+    canvasRoll += sm.rz * 1.2 * s * dt;
     tiltX = (tiltX + sm.rx * 1.2 * s * dt).clamp(-0.8, 0.8);
-    tiltY = (tiltY + sm.rz * 1.2 * s * dt).clamp(-0.8, 0.8);
+    tiltY = (tiltY + sm.ry * 1.2 * s * dt).clamp(-0.8, 0.8);
     if (sm.button0) {
       tiltX = 0;
       tiltY = 0;

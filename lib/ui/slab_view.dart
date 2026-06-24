@@ -20,6 +20,7 @@ class SlabView {
     required this.viewH,
     this.tiltX = 0,
     this.tiltY = 0,
+    this.roll = 0,
     this.zoom = 1,
     this.panX = 0,
     this.panY = 0,
@@ -29,20 +30,25 @@ class SlabView {
         _sinX = math.sin(tiltX),
         _cosY = math.cos(tiltY),
         _sinY = math.sin(tiltY),
+        _cosR = math.cos(roll),
+        _sinR = math.sin(roll),
         _s = 0.42 * (viewW < viewH ? viewW : viewH),
         _cx = viewW / 2,
         _cy = viewH / 2 {
     _computeHomography();
   }
 
-  final double viewW, viewH, tiltX, tiltY, zoom, panX, panY, thickness, camDist;
-  final double _cosX, _sinX, _cosY, _sinY, _s, _cx, _cy;
+  final double viewW, viewH, tiltX, tiltY, roll, zoom, panX, panY, thickness;
+  final double camDist;
+  final double _cosX, _sinX, _cosY, _sinY, _cosR, _sinR, _s, _cx, _cy;
 
   /// Project a canvas point ([u],[v] in 0..1) at [depth01] (0 = top face,
   /// 1 = back face) to screen pixels.
   Pt project(double u, double v, [double depth01 = 0]) {
-    final double x = u - 0.5;
-    final double y = v - 0.5;
+    // In-plane roll about the canvas centre, then the 3D tilt/perspective.
+    final double u0 = u - 0.5, v0 = v - 0.5;
+    final double x = u0 * _cosR - v0 * _sinR;
+    final double y = u0 * _sinR + v0 * _cosR;
     final double z = -depth01 * thickness;
     // rotate about X (pitch), then Y (yaw)
     final double y1 = y * _cosX - z * _sinX;

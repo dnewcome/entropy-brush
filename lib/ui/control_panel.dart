@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: 3d-slab · 06-24 #8',
+            child: const Text('build: sm-map+roll · 06-24 #9',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -289,6 +289,10 @@ class _ControlPanelState extends State<ControlPanel> {
             c.panY = v;
             c.viewChanged();
           }),
+          _slider('Canvas rotate', c.canvasRoll, -3.14159, 3.14159, (v) {
+            c.canvasRoll = v;
+            c.viewChanged();
+          }),
           _slider('Canvas thickness', c.canvasThicknessFrac, 0.0, 0.2, (v) {
             c.canvasThicknessFrac = v;
             c.viewChanged();
@@ -302,6 +306,7 @@ class _ControlPanelState extends State<ControlPanel> {
                 c.zoom = 1.0;
                 c.panX = 0;
                 c.panY = 0;
+                c.canvasRoll = 0;
                 c.viewChanged();
                 setState(() {});
               },

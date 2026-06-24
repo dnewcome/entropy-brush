@@ -21,6 +21,7 @@ class SlabPainter extends CustomPainter {
         viewH: size.height,
         tiltX: controller.tiltX,
         tiltY: controller.tiltY,
+        roll: controller.canvasRoll,
         zoom: controller.zoom,
         panX: controller.panX,
         panY: controller.panY,
