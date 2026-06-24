@@ -8,6 +8,7 @@ import 'sim/brush.dart';
 import 'sim/paint_grid.dart';
 import 'sim/paint_profile.dart';
 import 'twin/camera_input.dart';
+import 'twin/spacemouse_input.dart';
 import 'twin/twin_performance.dart';
 
 /// Ties the input, the bristle brush, the height-field grid and the relief
@@ -355,6 +356,55 @@ class PaintController extends ChangeNotifier {
     _requestPaletteUpload();
   }
 
+  // --- SpaceMouse (6DOF view navigation) ---
+  SpaceMouseInput? _spaceMouse;
+  bool get spaceMouseOn => _spaceMouse != null;
+  String? spaceMouseStatus;
+  double spaceMouseSpeed = 1.0;
+
+  Future<void> toggleSpaceMouse() async {
+    if (_spaceMouse != null) {
+      await _spaceMouse!.stop();
+      _spaceMouse = null;
+      spaceMouseStatus = null;
+    } else {
+      final sm = SpaceMouseInput();
+      try {
+        await sm.start();
+        _spaceMouse = sm;
+        spaceMouseStatus = 'listening · run tools/spacemouse.py';
+      } catch (e) {
+        spaceMouseStatus = 'could not open UDP ${sm.port}: $e';
+      }
+    }
+    notifyListeners();
+  }
+
+  // Integrate the latest SpaceMouse axes into the view over [dt]. Returns true
+  // if the view moved (so the frame loop knows to repaint).
+  bool _applySpaceMouse(double dt) {
+    final sm = _spaceMouse;
+    if (sm == null || !sm.active) return false;
+    final double s = spaceMouseSpeed;
+    // Translation x/y → pan, push/pull z → zoom.
+    panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.0, 1.0);
+    panY = (panY - sm.ty * 0.6 * s * dt).clamp(-1.0, 1.0);
+    if (sm.tz != 0) {
+      zoom = (zoom * math.exp(sm.tz * 1.5 * s * dt)).clamp(0.5, 12.0);
+    }
+    // Pitch → tiltX, yaw → tiltZ. (Roll unused — the canvas has no roll axis.)
+    tiltX = (tiltX + sm.ry * 1.2 * s * dt).clamp(-0.8, 0.8);
+    tiltY = (tiltY + sm.rz * 1.2 * s * dt).clamp(-0.8, 0.8);
+    if (sm.button0) {
+      tiltX = 0;
+      tiltY = 0;
+      zoom = 1.0;
+      panX = 0;
+      panY = 0;
+    }
+    return true;
+  }
+
   // --- wet-paint flow ---
   double flowRate = 0.4; // 0..1 leveling/oozing strength (drives substep count)
   double dryTime = 3.0; // seconds for wet paint to mostly set
@@ -371,6 +421,7 @@ class PaintController extends ChangeNotifier {
       ..reset()
       ..start();
     if (dt <= 0 || dt > 0.05) dt = 1 / 60;
+    if (_applySpaceMouse(dt)) notifyListeners();
     // Strength drives how many leveling substeps run per frame (each capped for
     // stability), so high flow gives obvious oozing without going unstable.
     if (flowRate > 0.01) {
@@ -470,6 +521,7 @@ class PaintController extends ChangeNotifier {
   @override
   void dispose() {
     _camera?.stop();
+    _spaceMouse?.stop();
     renderer?.dispose();
     paletteRenderer?.dispose();
     super.dispose();

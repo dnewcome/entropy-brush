@@ -112,6 +112,17 @@ pip install mediapipe opencv-python
 python3 tools/hand_tracker.py   # then toggle "Start webcam" in the app
 ```
 
+## SpaceMouse (6DOF view navigation)
+
+A 3Dconnexion SpaceMouse drives the **view** — translate to pan, push/pull to
+zoom, tilt/twist to orbit — so your non-dominant hand navigates while you paint.
+Same UDP-sidecar pattern:
+
+```bash
+pip install pyspacemouse        # Linux also needs libhidapi + device permission
+python3 tools/spacemouse.py     # then toggle "Start SpaceMouse" in the app
+```
+
 ## Running
 
 ```bash

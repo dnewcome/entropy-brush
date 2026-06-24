@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: mm-scale · 06-24 #6',
+            child: const Text('build: spacemouse · 06-24 #7',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -346,6 +346,33 @@ class _ControlPanelState extends State<ControlPanel> {
               ],
             ),
           ),
+
+          const SizedBox(height: 16),
+          _heading('SpaceMouse (6DOF view)'),
+          AnimatedBuilder(
+            animation: c,
+            builder: (context, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton.tonal(
+                  onPressed: c.toggleSpaceMouse,
+                  style: c.spaceMouseOn
+                      ? FilledButton.styleFrom(
+                          backgroundColor: Colors.indigo.shade400)
+                      : null,
+                  child: Text(c.spaceMouseOn ? 'Stop SpaceMouse' : 'Start SpaceMouse'),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  c.spaceMouseStatus ??
+                      'pan/zoom/tilt the view · run tools/spacemouse.py',
+                  style: const TextStyle(fontSize: 10, color: Colors.white38),
+                ),
+              ],
+            ),
+          ),
+          _slider('SpaceMouse speed', c.spaceMouseSpeed, 0.1, 3.0,
+              (v) => c.spaceMouseSpeed = v),
 
           const SizedBox(height: 16),
           _heading('Twin (record / replay)'),
