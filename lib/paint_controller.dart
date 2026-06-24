@@ -419,11 +419,14 @@ class PaintController extends ChangeNotifier {
     }
     panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.5, 1.5);
     panY = (panY + sm.tz * 0.6 * s * dt).clamp(-1.5, 1.5);
-    // Rotation: twist (yaw, rz) spins the canvas flat in its plane; tilting the
-    // cap pitches (rx) and rolls (ry) the slab in 3D to show the edges.
-    canvasRoll += sm.rz * 1.2 * s * dt;
+    // Rotation (axis identity varies by unit; this matches a SpacePilot Pro
+    // where tilt-left/right reports on rz and twist on ry):
+    //   twist (ry)            → spin the canvas flat in its plane
+    //   tilt fwd/back (rx)    → tiltX
+    //   tilt left/right (rz)  → tiltY
+    canvasRoll += sm.ry * 1.2 * s * dt;
     tiltX = (tiltX + sm.rx * 1.2 * s * dt).clamp(-0.8, 0.8);
-    tiltY = (tiltY + sm.ry * 1.2 * s * dt).clamp(-0.8, 0.8);
+    tiltY = (tiltY + sm.rz * 1.2 * s * dt).clamp(-0.8, 0.8);
     if (sm.button0) {
       tiltX = 0;
       tiltY = 0;
