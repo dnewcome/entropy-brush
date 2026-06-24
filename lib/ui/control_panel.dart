@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: stl-export · 06-24 #5',
+            child: const Text('build: mm-scale · 06-24 #6',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -409,6 +409,17 @@ class _ControlPanelState extends State<ControlPanel> {
           ),
 
           const SizedBox(height: 16),
+          _heading('Export scale (mm)'),
+          _slider('Size (longer side)', c.exportSizeMm, 20, 300,
+              (v) => c.exportSizeMm = v),
+          _slider('Relief height', c.exportReliefMm, 0.5, 20,
+              (v) => c.exportReliefMm = v),
+          _slider('STL base', c.exportBaseMm, 0.5, 10,
+              (v) => c.exportBaseMm = v),
+          _slider('Mesh resolution', c.exportResolution.toDouble(), 96, 512,
+              (v) => c.exportResolution = v.round()),
+
+          const SizedBox(height: 12),
           _heading('Export'),
           Row(
             children: [

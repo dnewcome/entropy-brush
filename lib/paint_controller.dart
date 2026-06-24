@@ -411,9 +411,22 @@ class PaintController extends ChangeNotifier {
 
   // --- exports ---
 
+  // Real-world export scale (mm), shared by GLB + STL.
+  double exportSizeMm = 100.0; // longer side
+  double exportReliefMm = 6.0; // tallest impasto height
+  double exportBaseMm = 2.0; // STL base plate
+  int exportResolution = 256; // mesh grid resolution
+
   Future<String> exportPng() => Exporter.savePng(grid, renderer!, light);
-  Future<String> exportGlb() => Exporter.saveGlb(grid);
-  Future<String> exportStl() => Exporter.saveStl(grid);
+  Future<String> exportGlb() => Exporter.saveGlb(grid,
+      resolution: exportResolution,
+      sizeMm: exportSizeMm,
+      reliefMm: exportReliefMm);
+  Future<String> exportStl() => Exporter.saveStl(grid,
+      resolution: exportResolution,
+      sizeMm: exportSizeMm,
+      reliefMm: exportReliefMm,
+      baseMm: exportBaseMm);
 
   Future<String> savePerformance() {
     final p = _lastPerformance;

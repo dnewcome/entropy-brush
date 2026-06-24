@@ -6,23 +6,27 @@ import '../sim/paint_grid.dart';
 /// Build a binary STL of the paint relief as a **watertight solid** suitable for
 /// 3D printing or CNC: the displaced relief surface on top, a flat base, and
 /// side walls joining them. (STL has no colour — geometry only.)
+///
+/// Real-world scaled: coordinates are in millimetres (slicers default to mm).
+/// [sizeMm] is the width of the longer canvas side, [reliefMm] the height the
+/// tallest impasto reaches, [baseMm] the floor thickness.
 Uint8List buildStl(
   PaintGrid grid, {
-  int maxResolution = 256,
-  double planeSize = 2.0,
-  double reliefFraction = 0.14,
+  int resolution = 256,
+  double sizeMm = 100.0,
+  double reliefMm = 6.0,
+  double baseMm = 2.0,
   double paintWeight = 3.0,
-  double baseThickness = 0.12,
 }) {
-  final int step = (grid.width > maxResolution || grid.height > maxResolution)
-      ? ((grid.width > grid.height ? grid.width : grid.height) / maxResolution)
+  final int step = (grid.width > resolution || grid.height > resolution)
+      ? ((grid.width > grid.height ? grid.width : grid.height) / resolution)
           .ceil()
       : 1;
   final int nx = ((grid.width - 1) ~/ step) + 1;
   final int ny = ((grid.height - 1) ~/ step) + 1;
 
   final int maxDim = grid.width > grid.height ? grid.width : grid.height;
-  final double wpc = planeSize / maxDim;
+  final double wpc = sizeMm / maxDim;
   final double xOff = grid.width * wpc * 0.5;
   final double yOff = grid.height * wpc * 0.5;
 
@@ -33,7 +37,8 @@ Uint8List buildStl(
     final h = weighted(i);
     if (h > hmax) hmax = h;
   }
-  final double zScale = hmax > 1e-6 ? planeSize * reliefFraction / hmax : 0.0;
+  final double zScale = hmax > 1e-6 ? reliefMm / hmax : 0.0;
+  final double baseThickness = baseMm;
 
   final xs = Float64List(nx);
   final ys = Float64List(ny);

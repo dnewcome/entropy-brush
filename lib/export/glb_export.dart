@@ -10,17 +10,17 @@ import '../sim/paint_grid.dart';
 /// the 3D asset the downstream pipeline consumes.
 Uint8List buildGlb(
   PaintGrid grid, {
-  int maxResolution = 256,
-  double planeSize = 2.0,
-  // Tallest feature is mapped to this fraction of the plane width, so the mesh
-  // always shows clear relief regardless of the (arbitrary) height units.
-  double reliefFraction = 0.14,
+  int resolution = 256,
+  // Millimetres (kept consistent with the STL export). [sizeMm] is the longer
+  // side; the tallest impasto reaches [reliefMm].
+  double sizeMm = 100.0,
+  double reliefMm = 6.0,
   // Paint thickness counts this much more than the canvas substrate, so impasto
   // stands proud of the fine canvas tooth instead of being buried in it.
   double paintWeight = 3.0,
 }) {
-  final int step = (grid.width > maxResolution || grid.height > maxResolution)
-      ? ((grid.width > grid.height ? grid.width : grid.height) / maxResolution)
+  final int step = (grid.width > resolution || grid.height > resolution)
+      ? ((grid.width > grid.height ? grid.width : grid.height) / resolution)
           .ceil()
       : 1;
 
@@ -29,12 +29,11 @@ Uint8List buildGlb(
   final int nv = nx * ny;
 
   final int maxDim = grid.width > grid.height ? grid.width : grid.height;
-  final double worldPerCell = planeSize / maxDim;
+  final double worldPerCell = sizeMm / maxDim;
   final double xOff = grid.width * worldPerCell * 0.5;
   final double yOff = grid.height * worldPerCell * 0.5;
 
-  // Weighted surface height, and an auto-scale so the tallest point reaches
-  // reliefFraction * planeSize.
+  // Weighted surface height, auto-scaled so the tallest point reaches reliefMm.
   double weightedHeight(int idx) =>
       grid.canvasHeight[idx] + grid.thickness[idx] * paintWeight;
   double hmax = 0;
@@ -42,7 +41,7 @@ Uint8List buildGlb(
     final h = weightedHeight(i);
     if (h > hmax) hmax = h;
   }
-  final double zScale = hmax > 1e-6 ? planeSize * reliefFraction / hmax : 0.0;
+  final double zScale = hmax > 1e-6 ? reliefMm / hmax : 0.0;
 
   final positions = Float32List(nv * 3);
   final colors = Float32List(nv * 4);

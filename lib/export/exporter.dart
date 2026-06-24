@@ -39,16 +39,28 @@ class Exporter {
   }
 
   /// Build and save the relief mesh as GLB. Returns the file path.
-  static Future<String> saveGlb(PaintGrid grid) async {
-    final bytes = buildGlb(grid);
+  static Future<String> saveGlb(PaintGrid grid,
+      {int resolution = 256,
+      double sizeMm = 100,
+      double reliefMm = 6}) async {
+    final bytes = buildGlb(grid,
+        resolution: resolution, sizeMm: sizeMm, reliefMm: reliefMm);
     final path = '${exportDir().path}/relief-${_stamp()}.glb';
     await File(path).writeAsBytes(bytes);
     return path;
   }
 
   /// Build and save the relief as a watertight binary STL. Returns the path.
-  static Future<String> saveStl(PaintGrid grid) async {
-    final bytes = buildStl(grid);
+  static Future<String> saveStl(PaintGrid grid,
+      {int resolution = 256,
+      double sizeMm = 100,
+      double reliefMm = 6,
+      double baseMm = 2}) async {
+    final bytes = buildStl(grid,
+        resolution: resolution,
+        sizeMm: sizeMm,
+        reliefMm: reliefMm,
+        baseMm: baseMm);
     final path = '${exportDir().path}/relief-${_stamp()}.stl';
     await File(path).writeAsBytes(bytes);
     return path;
