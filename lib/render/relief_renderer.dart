@@ -97,7 +97,7 @@ class ReliefRenderer {
   static const List<double> _straightView = [0.0, 0.0, 1.0];
 
   void _setUniforms(Size outSize, LightSettings light, double gw, double gh,
-      List<double> viewDir) {
+      List<double> viewDir, double zoom, double panX, double panY) {
     final dir = light.direction;
     _shader
       ..setFloat(0, outSize.width)
@@ -118,17 +118,24 @@ class ReliefRenderer {
       ..setFloat(15, light.gloss)
       ..setFloat(16, light.fill)
       ..setFloat(17, light.saturation)
+      ..setFloat(18, zoom)
+      ..setFloat(19, panX)
+      ..setFloat(20, panY)
       ..setImageSampler(0, heightTex!)
       ..setImageSampler(1, albedoTex!);
   }
 
   /// Paint the shaded relief into [canvas] filling [size]. [viewDir] is the
   /// direction to the camera in canvas space (drives specular under tilt).
+  /// [zoom]/[pan] resample the grid in UV so zooming stays crisp.
   void paint(Canvas canvas, Size size, LightSettings light,
-      {List<double> viewDir = _straightView}) {
+      {List<double> viewDir = _straightView,
+      double zoom = 1.0,
+      double panX = 0.0,
+      double panY = 0.0}) {
     if (!ready) return;
     _setUniforms(size, light, heightTex!.width.toDouble(),
-        heightTex!.height.toDouble(), viewDir);
+        heightTex!.height.toDouble(), viewDir, zoom, panX, panY);
     canvas.drawRect(Offset.zero & size, Paint()..shader = _shader);
   }
 

@@ -12,10 +12,18 @@ class PaintCanvas extends StatelessWidget {
   final PaintController controller;
 
   void _send(Offset local, Size size, void Function(double, double) fn) {
-    final double gx = (local.dx / size.width * controller.grid.width)
-        .clamp(0.0, controller.grid.width - 1.0);
-    final double gy = (local.dy / size.height * controller.grid.height)
-        .clamp(0.0, controller.grid.height - 1.0);
+    // Map the pointer through the same UV zoom/pan the shader uses, so painting
+    // lands where you click at any zoom.
+    final double uvx = (local.dx / size.width - 0.5) / controller.zoom +
+        0.5 +
+        controller.panX;
+    final double uvy = (local.dy / size.height - 0.5) / controller.zoom +
+        0.5 +
+        controller.panY;
+    final double gx =
+        (uvx * controller.grid.width).clamp(0.0, controller.grid.width - 1.0);
+    final double gy =
+        (uvy * controller.grid.height).clamp(0.0, controller.grid.height - 1.0);
     fn(gx, gy);
   }
 
@@ -47,17 +55,12 @@ class PaintCanvas extends StatelessWidget {
                     ),
                   );
                 }
-                // Perspective tilt + zoom + pan of the whole painted card. The
-                // relief lighting lives in the shader, so tilting + moving the
-                // light makes the impasto read as real 3D. Hit-testing is
-                // transformed too, so painting stays accurate at any zoom/tilt.
+                // Perspective tilt only (zoom + pan are done in the shader's UV
+                // so the render stays crisp instead of magnifying a raster).
                 final tilt = Matrix4.identity()
                   ..setEntry(3, 2, controller.perspective)
-                  ..translateByDouble(controller.panX, controller.panY, 0.0, 1.0)
                   ..rotateX(controller.tiltX)
-                  ..rotateY(controller.tiltY)
-                  ..scaleByDouble(
-                      controller.zoom, controller.zoom, controller.zoom, 1.0);
+                  ..rotateY(controller.tiltY);
                 return Transform(
                   alignment: Alignment.center,
                   transform: tilt,
@@ -88,6 +91,9 @@ class PaintCanvas extends StatelessWidget {
                             renderer: controller.renderer,
                             light: controller.light,
                             viewDir: controller.viewDir,
+                            zoom: controller.zoom,
+                            panX: controller.panX,
+                            panY: controller.panY,
                           ),
                           size: size,
                           isComplex: true,
@@ -115,11 +121,15 @@ class ReliefPainter extends CustomPainter {
     required this.renderer,
     required this.light,
     this.viewDir = const [0.0, 0.0, 1.0],
+    this.zoom = 1.0,
+    this.panX = 0.0,
+    this.panY = 0.0,
   }) : super(repaint: repaintOn);
 
   final ReliefRenderer? renderer;
   final LightSettings light;
   final List<double> viewDir;
+  final double zoom, panX, panY;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -129,7 +139,8 @@ class ReliefPainter extends CustomPainter {
           Offset.zero & size, Paint()..color = const Color(0xFF2A2A2E));
       return;
     }
-    r.paint(canvas, size, light, viewDir: viewDir);
+    r.paint(canvas, size, light,
+        viewDir: viewDir, zoom: zoom, panX: panX, panY: panY);
   }
 
   @override

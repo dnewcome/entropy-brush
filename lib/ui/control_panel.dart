@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: lit+color-fix · 06-24 #2',
+            child: const Text('build: crisp-zoom · 06-24 #3',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -277,15 +277,15 @@ class _ControlPanelState extends State<ControlPanel> {
             c.tiltY = v;
             c.viewChanged();
           }),
-          _slider('Zoom', c.zoom, 0.5, 5.0, (v) {
+          _slider('Zoom', c.zoom, 0.5, 12.0, (v) {
             c.zoom = v;
             c.viewChanged();
           }),
-          _slider('Pan X', c.panX, -400, 400, (v) {
+          _slider('Pan X', c.panX, -0.5, 0.5, (v) {
             c.panX = v;
             c.viewChanged();
           }),
-          _slider('Pan Y', c.panY, -400, 400, (v) {
+          _slider('Pan Y', c.panY, -0.5, 0.5, (v) {
             c.panY = v;
             c.viewChanged();
           }),
