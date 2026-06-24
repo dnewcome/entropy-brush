@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: crisp-zoom · 06-24 #3',
+            child: const Text('build: scroll+orbit · 06-24 #4',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -269,11 +269,11 @@ class _ControlPanelState extends State<ControlPanel> {
 
           const SizedBox(height: 16),
           _heading('View (tilt · zoom · pan)'),
-          _slider('Tilt X (pitch)', c.tiltX, -0.6, 0.6, (v) {
+          _slider('Tilt X (pitch)', c.tiltX, -0.8, 0.8, (v) {
             c.tiltX = v;
             c.viewChanged();
           }),
-          _slider('Tilt Y (yaw)', c.tiltY, -0.6, 0.6, (v) {
+          _slider('Tilt Y (yaw)', c.tiltY, -0.8, 0.8, (v) {
             c.tiltY = v;
             c.viewChanged();
           }),
@@ -281,11 +281,11 @@ class _ControlPanelState extends State<ControlPanel> {
             c.zoom = v;
             c.viewChanged();
           }),
-          _slider('Pan X', c.panX, -0.5, 0.5, (v) {
+          _slider('Pan X', c.panX, -0.6, 0.6, (v) {
             c.panX = v;
             c.viewChanged();
           }),
-          _slider('Pan Y', c.panY, -0.5, 0.5, (v) {
+          _slider('Pan Y', c.panY, -0.6, 0.6, (v) {
             c.panY = v;
             c.viewChanged();
           }),

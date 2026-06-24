@@ -1,7 +1,11 @@
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../paint_controller.dart';
 import '../render/relief_renderer.dart';
+import 'orbit_gizmo.dart';
 
 /// The painting surface. Keeps a square aspect so the square grid maps to the
 /// view without distortion, forwards pointer input (converted to grid
@@ -25,6 +29,23 @@ class PaintCanvas extends StatelessWidget {
     final double gy =
         (uvy * controller.grid.height).clamp(0.0, controller.grid.height - 1.0);
     fn(gx, gy);
+  }
+
+  /// Scroll-wheel zoom, anchored on the cursor so the point under the pointer
+  /// stays fixed (zoom toward where you're looking).
+  void _zoomAt(Offset local, Size size, double scrollDy) {
+    final double z = controller.zoom;
+    final double sx = local.dx / size.width - 0.5;
+    final double sy = local.dy / size.height - 0.5;
+    // Grid-UV currently under the cursor.
+    final double uvx = sx / z + 0.5 + controller.panX;
+    final double uvy = sy / z + 0.5 + controller.panY;
+    final double nz = (z * math.exp(-scrollDy * 0.0015)).clamp(0.5, 12.0);
+    // Re-solve pan so that same UV stays under the cursor at the new zoom.
+    controller.panX = uvx - 0.5 - sx / nz;
+    controller.panY = uvy - 0.5 - sy / nz;
+    controller.zoom = nz;
+    controller.viewChanged();
   }
 
   @override
@@ -61,7 +82,7 @@ class PaintCanvas extends StatelessWidget {
                   ..setEntry(3, 2, controller.perspective)
                   ..rotateX(controller.tiltX)
                   ..rotateY(controller.tiltY);
-                return Transform(
+                final canvas = Transform(
                   alignment: Alignment.center,
                   transform: tilt,
                   child: DecoratedBox(
@@ -84,6 +105,11 @@ class PaintCanvas extends StatelessWidget {
                       },
                       onPointerUp: (e) => controller.strokeEnd(),
                       onPointerCancel: (e) => controller.strokeEnd(),
+                      onPointerSignal: (e) {
+                        if (e is PointerScrollEvent) {
+                          _zoomAt(e.localPosition, size, e.scrollDelta.dy);
+                        }
+                      },
                       child: ClipRect(
                         child: CustomPaint(
                           painter: ReliefPainter(
@@ -102,6 +128,16 @@ class PaintCanvas extends StatelessWidget {
                       ),
                     ),
                   ),
+                );
+                return Stack(
+                  children: [
+                    Positioned.fill(child: canvas),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: OrbitGizmo(controller: controller),
+                    ),
+                  ],
                 );
               },
             );
