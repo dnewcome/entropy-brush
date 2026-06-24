@@ -73,6 +73,11 @@ dart run test/twin_replay_test.dart
 # ...etc
 ```
 
+## Design docs
+
+Architecture decisions live in [`docs/`](docs/) — e.g.
+[ADR 0001: paint representation (grid vs. Gaussian splats)](docs/adr/0001-paint-representation-grid-vs-splats.md).
+
 ## Status
 
 Prototype, evolving quickly. See `BRIEF.md` for the original kickoff intent.
