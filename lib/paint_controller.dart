@@ -383,7 +383,10 @@ class PaintController extends ChangeNotifier {
   SpaceMouseInput? _spaceMouse;
   bool get spaceMouseOn => _spaceMouse != null;
   String? spaceMouseStatus;
-  double spaceMouseSpeed = 1.0;
+  // Separate sensitivities (zoom was too hot, pan too sluggish).
+  double smPanSpeed = 1.8;
+  double smZoomSpeed = 0.6;
+  double smTiltSpeed = 1.2;
 
   Future<void> toggleSpaceMouse() async {
     if (_spaceMouse != null) {
@@ -408,25 +411,20 @@ class PaintController extends ChangeNotifier {
   bool _applySpaceMouse(double dt) {
     final sm = _spaceMouse;
     if (sm == null || !sm.active) return false;
-    final double s = spaceMouseSpeed;
     // SpaceMouse translation:
     //   push/pull the cap (Y, toward/away)  → zoom
     //   slide left/right (X)                → pan X
     //   lift/press the cap (Z, up/down)     → pan Y
-    // Flip any sign below if an axis feels backwards on your unit.
     if (sm.ty != 0) {
-      zoom = (zoom * math.exp(sm.ty * 1.5 * s * dt)).clamp(0.5, 12.0);
+      zoom = (zoom * math.exp(sm.ty * smZoomSpeed * dt)).clamp(0.5, 12.0);
     }
-    panX = (panX + sm.tx * 0.6 * s * dt).clamp(-1.5, 1.5);
-    panY = (panY + sm.tz * 0.6 * s * dt).clamp(-1.5, 1.5);
-    // Rotation (axis identity varies by unit; this matches a SpacePilot Pro
-    // where tilt-left/right reports on rz and twist on ry):
-    //   twist (ry)            → spin the canvas flat in its plane
-    //   tilt fwd/back (rx)    → tiltX
-    //   tilt left/right (rz)  → tiltY
-    canvasRoll += sm.ry * 1.2 * s * dt;
-    tiltX = (tiltX + sm.rx * 1.2 * s * dt).clamp(-0.8, 0.8);
-    tiltY = (tiltY + sm.rz * 1.2 * s * dt).clamp(-0.8, 0.8);
+    panX = (panX + sm.tx * smPanSpeed * dt).clamp(-1.5, 1.5);
+    panY = (panY + sm.tz * smPanSpeed * dt).clamp(-1.5, 1.5);
+    // Rotation: twist (ry) spins the canvas; tilt fwd/back (rx) → tiltX;
+    // tilt left/right (rz) → tiltY.
+    canvasRoll += sm.ry * smTiltSpeed * dt;
+    tiltX = (tiltX + sm.rx * smTiltSpeed * dt).clamp(-0.8, 0.8);
+    tiltY = (tiltY + sm.rz * smTiltSpeed * dt).clamp(-0.8, 0.8);
     if (sm.button0) {
       tiltX = 0;
       tiltY = 0;
