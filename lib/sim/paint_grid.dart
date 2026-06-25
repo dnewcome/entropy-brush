@@ -439,7 +439,7 @@ class PaintGrid {
             if (gravX != 0) {
               final int j = gravX > 0 ? i + 1 : i - 1;
               double amt = gravX.abs() * mobile * wi;
-              if (amt > mobile * 0.5) amt = mobile * 0.5;
+              if (amt > mobile * 0.7) amt = mobile * 0.7;
               if (amt > 0) {
                 dH[i] -= amt;
                 dH[j] += amt;
@@ -453,7 +453,7 @@ class PaintGrid {
             if (gravY != 0) {
               final int j = gravY > 0 ? i + width : i - width;
               double amt = gravY.abs() * mobile * wi;
-              if (amt > mobile * 0.5) amt = mobile * 0.5;
+              if (amt > mobile * 0.7) amt = mobile * 0.7;
               if (amt > 0) {
                 dH[i] -= amt;
                 dH[j] += amt;

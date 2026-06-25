@@ -497,14 +497,16 @@ class PaintController extends ChangeNotifier {
     if (doFlow || gravityDrips) {
       final int iters = doFlow ? math.max(1, (flowRate * 6).round()) : 1;
       final double sdt = dt / iters;
-      final double flowK = doFlow ? 0.2 : 0.0;
+      // When gravity drips are on, drop the isotropic leveling way down so the
+      // paint RUNS DOWN (directional) instead of bleeding out in all directions.
+      final double flowK = !doFlow ? 0.0 : (gravityDrips ? 0.03 : 0.2);
       // World-down gravity projected onto the tilted canvas plane → a drip
       // vector in grid coords. cos(tiltX) is full when face-on, zero when
       // pitched flat; canvasRoll rotates the drip direction with the canvas.
       double gx = 0, gy = 0;
       if (gravityDrips) {
         final double mag = math.cos(tiltX);
-        final double base = 0.3 * gravityStrength / iters;
+        final double base = 1.3 * gravityStrength / iters;
         gx = math.sin(canvasRoll) * mag * base;
         gy = math.cos(canvasRoll) * mag * base;
       }
