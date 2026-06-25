@@ -20,7 +20,13 @@ class PaintGrid {
         b = Float32List(width * height) {
     clear();
     generateCanvasTexture();
+    dripPhase = math.Random().nextDouble() * 997.0;
   }
+
+  /// Random phase for the drip-wander noise field, so drips don't form the exact
+  /// same shape every time. Re-roll with [shuffleDrips].
+  double dripPhase = 0;
+  void shuffleDrips() => dripPhase = math.Random().nextDouble() * 997.0;
 
   final int width;
   final int height;
@@ -360,9 +366,18 @@ class PaintGrid {
       double dryTime = 3.0,
       double gravX = 0,
       double gravY = 0,
-      double dripYield = 0.0}) {
+      double dripYield = 0.0,
+      double dripWander = 0.0}) {
     final bool grav = gravX != 0 || gravY != 0;
     if (!_hasWet || (flow <= 0 && !grav)) return;
+    // Lateral wander magnitude (cells) — a smooth noise field nudges drips
+    // left/right as they fall so they meander and aren't identical.
+    final double gMag = math.sqrt(gravX * gravX + gravY * gravY);
+    final double wander = grav ? dripWander * gMag : 0.0;
+    // Viscosity resists all motion: slower leveling, higher drip yield, slower
+    // drips. (Yield-stress / Bingham behaviour of the medium.)
+    final double visc = profile.viscosity.clamp(0.1, 10.0);
+    final double yld = dripYield * visc;
     final int x0 = math.max(1, _wetMinX);
     final int y0 = math.max(1, _wetMinY);
     final int x1 = math.min(width - 2, _wetMaxX);
@@ -393,7 +408,7 @@ class PaintGrid {
       }
     }
 
-    final double k = flow.clamp(0.0, 0.2);
+    final double k = (flow / visc).clamp(0.0, 0.2);
     for (int y = y0; y <= y1; y++) {
       final int base = y * width;
       for (int x = x0; x <= x1; x++) {
@@ -433,12 +448,19 @@ class PaintGrid {
         // (thickness − dripYield) can flow; it slides downhill into the
         // downstream neighbour, leaving the film behind. Thin paint holds.
         if (grav) {
-          final double mobile = thickness[i] - dripYield;
+          final double mobile = thickness[i] - yld;
           if (mobile > 0) {
-            final double wi = wet[i];
-            if (gravX != 0) {
-              final int j = gravX > 0 ? i + 1 : i - 1;
-              double amt = gravX.abs() * mobile * wi;
+            final double wi = wet[i] / visc; // viscous paint runs slower
+            // Horizontal drift with a smooth low-frequency wander, so the drip
+            // meanders left/right as it falls instead of running dead-straight.
+            double gxc = gravX;
+            if (wander > 0) {
+              final double nz = valueNoise(x * 0.03 + dripPhase, y * 0.06);
+              gxc += (nz - 0.5) * 2.0 * wander;
+            }
+            if (gxc != 0) {
+              final int j = gxc > 0 ? i + 1 : i - 1;
+              double amt = gxc.abs() * mobile * wi;
               if (amt > mobile * 0.7) amt = mobile * 0.7;
               if (amt > 0) {
                 dH[i] -= amt;

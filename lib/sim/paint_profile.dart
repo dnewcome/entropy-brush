@@ -5,6 +5,7 @@
 class PaintProfile {
   PaintProfile({
     this.body = 1.0,
+    this.viscosity = 1.0,
     this.lumpiness = 0.25,
     this.grain = 0.12,
     this.opacity = 1.0,
@@ -13,6 +14,12 @@ class PaintProfile {
   /// How much paint piles per unit deposited — the "buttery vs runny" axis.
   /// Higher body builds taller impasto relief and covers more opaquely.
   double body;
+
+  /// Flow resistance / yield stress of the medium. Higher viscosity means paint
+  /// resists *moving* once down: it levels more slowly (holds ridges/impasto)
+  /// and needs to be thicker before it drips (higher effective yield), and drips
+  /// run slower. Low viscosity = runny washes that ooze and drip easily.
+  double viscosity;
 
   /// 0..1 strength of the canvas-locked lump/tooth texture modulating height.
   double lumpiness;

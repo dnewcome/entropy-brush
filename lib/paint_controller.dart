@@ -266,6 +266,7 @@ class PaintController extends ChangeNotifier {
 
   void clearCanvas() {
     grid.clear();
+    grid.shuffleDrips(); // fresh drip pattern each canvas
     _requestReliefImage();
   }
 
@@ -477,6 +478,7 @@ class PaintController extends ChangeNotifier {
   bool gravityDrips = false; // world-down gravity → drips, per canvas tilt
   double gravityStrength = 1.0;
   double dripYield = 0.07; // yield threshold: paint thinner than this won't drip
+  double dripWander = 0.4; // lateral meander so drips aren't identical
   final Stopwatch _frameClock = Stopwatch()..start();
 
   /// Pump one frame: advance replay/squeeze, run wet-paint flow, then refresh
@@ -516,7 +518,8 @@ class PaintController extends ChangeNotifier {
             dryTime: dryTime,
             gravX: gx,
             gravY: gy,
-            dripYield: dripYield);
+            dripYield: dripYield,
+            dripWander: dripWander);
         palette.flowStep(sdt, flow: doFlow ? 0.16 : 0.0, dryTime: dryTime * 0.6);
       }
     }

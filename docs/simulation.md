@@ -177,6 +177,13 @@ gravX = sin(canvasRoll) · cos(tiltX) · base
 gravY = cos(canvasRoll) · cos(tiltX) · base        base = 1.3·gravityStrength / iters
 ```
 
+**Viscosity** (`profile.viscosity`) resists all motion: leveling rate `/= visc`,
+effective yield `= dripYield · visc`, and the drip flow rate slows. So stiff
+high-viscosity paint holds its shape and barely drips; runny low-viscosity paint
+oozes and sheets down. **Drip wander** adds a smooth low-frequency lateral noise
+(random phase per canvas) so drips meander left/right and don't form the exact
+same shape twice.
+
 **Gravity must dominate leveling** or paint bleeds isotropically instead of
 running down. So when **Gravity drips** is on, leveling is suppressed to `0.03`.
 (Verified: drip region aspect h/w ≈ 2.3 vs isotropic bleed ≈ 1.2.)
@@ -236,6 +243,7 @@ is an exact **inverse homography** — round-trip verified in `slab_view_test`.
 | | displacement | 0.15 | trailing-tip plowing |
 | | dwellBuildup | 1.2 | velocity → extra volume (drip cause) |
 | Paint | body | 1.0 | pile height / opacity |
+| | viscosity | 1.0 | flow resistance: slower leveling, higher drip yield, slower drips |
 | | lumpiness | 0.25 | tooth/clump texture |
 | | grain / opacity | 0.12 / 1.0 | tooth scale / coverage |
 | Wet flow | flowRate | 0.4 | leveling/oozing strength |
@@ -243,6 +251,7 @@ is an exact **inverse homography** — round-trip verified in `slab_view_test`.
 | | gravityDrips | off | world-down drips |
 | | gravityStrength | 1.0 | drip speed |
 | | dripYield | 0.07 | surface-tension threshold (drip start) |
+| | dripWander | 0.4 | lateral meander so drips aren't identical |
 | Canvas | canvasAmplitude | 0.08 | substrate tooth depth |
 | | canvasThicknessFrac | 0.06 | slab edge thickness |
 | Light | occlusion / gloss / fill / saturation | 0.6 / 0.5 / 0.4 / 1.18 | material |
