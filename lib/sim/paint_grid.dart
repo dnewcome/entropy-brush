@@ -46,7 +46,7 @@ class PaintGrid {
   bool _hasWet = false;
 
   // Scratch buffers for the flow step (allocated lazily, reused each frame).
-  Float32List? _dH, _inA, _inR, _inG, _inB;
+  Float32List? _dH, _inA, _inR, _inG, _inB, _inW;
 
   void _wetTouch(int x, int y) {
     wet[y * width + x] = 1.0;
@@ -377,6 +377,7 @@ class PaintGrid {
     final inR = _inR ??= Float32List(width * height);
     final inG = _inG ??= Float32List(width * height);
     final inB = _inB ??= Float32List(width * height);
+    final inW = _inW ??= Float32List(width * height); // incoming wetness × mass
 
     // Zero scratch over the bbox plus a 1-cell margin (flow writes to neighbours).
     for (int y = y0 - 1; y <= y1 + 1; y++) {
@@ -388,6 +389,7 @@ class PaintGrid {
         inR[i] = 0;
         inG[i] = 0;
         inB[i] = 0;
+        inW[i] = 0;
       }
     }
 
@@ -417,11 +419,13 @@ class PaintGrid {
             inR[j] += amt * r[i];
             inG[j] += amt * g[i];
             inB[j] += amt * b[i];
+            inW[j] += amt * wet[i];
           } else {
             inA[i] += amt;
             inR[i] += amt * r[j];
             inG[i] += amt * g[j];
             inB[i] += amt * b[j];
+            inW[i] += amt * wet[j];
           }
         }
 
@@ -443,6 +447,7 @@ class PaintGrid {
                 inR[j] += amt * r[i];
                 inG[j] += amt * g[i];
                 inB[j] += amt * b[i];
+                inW[j] += amt * wi;
               }
             }
             if (gravY != 0) {
@@ -456,6 +461,7 @@ class PaintGrid {
                 inR[j] += amt * r[i];
                 inG[j] += amt * g[i];
                 inB[j] += amt * b[i];
+                inW[j] += amt * wi;
               }
             }
           }
@@ -463,8 +469,8 @@ class PaintGrid {
       }
     }
 
-    // Apply height/colour deltas and dry, tracking the shrinking wet region.
-    final double dryF = math.exp(-dt / math.max(0.05, dryTime));
+    // Apply height/colour/wetness deltas and dry, tracking the wet region.
+    final double dryBase = math.max(0.05, dryTime);
     double maxWet = 0;
     int nMinX = width, nMinY = height, nMaxX = 0, nMaxY = 0;
     for (int y = y0 - 1; y <= y1 + 1; y++) {
@@ -472,25 +478,31 @@ class PaintGrid {
       for (int x = x0 - 1; x <= x1 + 1; x++) {
         final int i = base + x;
         final double d = dH[i];
+        final double ia = inA[i];
         if (d != 0) {
           double nt = thickness[i] + d;
           if (nt < 0) nt = 0;
           thickness[i] = nt;
-          final double ia = inA[i];
-          if (ia > 0) {
-            final double frac = (ia / (nt + 1e-6)).clamp(0.0, 1.0) * 0.6;
-            r[i] = _kmMix(r[i], inR[i] / ia, frac);
-            g[i] = _kmMix(g[i], inG[i] / ia, frac);
-            b[i] = _kmMix(b[i], inB[i] / ia, frac);
-          }
-          _touch(x, y);
         }
+        if (ia > 0) {
+          // Mass-weighted: colour AND wetness follow the moving paint, so the
+          // pigment travels with the drip (no detached outline).
+          final double nt = thickness[i];
+          final double frac = (ia / (nt + 1e-6)).clamp(0.0, 1.0);
+          r[i] = _kmMix(r[i], inR[i] / ia, frac);
+          g[i] = _kmMix(g[i], inG[i] / ia, frac);
+          b[i] = _kmMix(b[i], inB[i] / ia, frac);
+          wet[i] += (inW[i] / ia - wet[i]) * frac;
+        }
+        if (d != 0 || ia > 0) _touch(x, y);
+
         double w = wet[i];
-        // Cells the drip ran into stay wet so it keeps running — drying still
-        // bounds how far a drip travels before it sets.
-        if (grav && inA[i] > 0.0008 && w < 0.5) w = 0.5;
         if (w > 0) {
-          w *= dryF;
+          // Thicker paint dries slower (more volume → longer to set), so big
+          // pools stay wet (and keep dripping) while thin trails dry and stop.
+          final double localDry =
+              math.exp(-dt / (dryBase * (1.0 + thickness[i] * 8.0)));
+          w *= localDry;
           if (w < 0.004) w = 0;
           wet[i] = w;
           if (w > 0) {

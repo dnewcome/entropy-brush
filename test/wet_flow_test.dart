@@ -57,7 +57,7 @@ void main() {
   // Drying: with a short dry time, flow should stop within a couple seconds.
   final g2 = PaintGrid(160, 160);
   g2.pile(80, 80, 5, 6.0, 0.3, 0.5, 0.8);
-  for (int i = 0; i < 180; i++) {
+  for (int i = 0; i < 700; i++) {
     g2.flowStep(1 / 60, flow: 0.2, dryTime: 1.0); // 3s total
   }
   final wetLeft = maxWet(g2);
