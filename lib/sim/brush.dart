@@ -44,6 +44,7 @@ class BrushConfig {
     this.bristleLength = 9.0,
     this.displacement = 0.15,
     this.infiniteLoad = false,
+    this.dwellBuildup = 1.2,
   });
 
   int bristleCount;
@@ -84,6 +85,11 @@ class BrushConfig {
   /// can paint continuously without reloading.
   bool infiniteLoad;
 
+  /// How much extra paint a slow/dwelling stroke lays (velocity → volume). This
+  /// is the *only* coupling from speed to drips: more dwell → more paint → more
+  /// likely to pass the drip yield. 0 = speed-independent deposition.
+  double dwellBuildup;
+
   BrushConfig copy() => BrushConfig(
         bristleCount: bristleCount,
         headRadius: headRadius,
@@ -97,6 +103,7 @@ class BrushConfig {
         bristleLength: bristleLength,
         displacement: displacement,
         infiniteLoad: infiniteLoad,
+        dwellBuildup: dwellBuildup,
       );
 }
 
@@ -196,7 +203,7 @@ class Brush {
   /// conserved. This is where end-of-stroke drips originate.
   void layPool(PaintGrid grid) {
     if (bristles.isEmpty || dwell <= 0.02) return;
-    final double frac = (0.18 * dwell).clamp(0.0, 0.5);
+    final double frac = (0.15 * config.dwellBuildup * dwell).clamp(0.0, 0.6);
     final int n = bristles.length;
     double amount = 0, pr = 0, pg = 0, pb = 0;
     for (final br in bristles) {
@@ -272,7 +279,7 @@ class Brush {
       final double gate = (loadFrac * 3.0).clamp(0.0, 1.0);
       // Dwell boost: slow strokes lay more paint per length (so it pools where
       // the brush slows and at stroke ends — the classic place drips begin).
-      final double dwellBoost = 1.0 + 1.2 * dwell;
+      final double dwellBoost = 1.0 + config.dwellBuildup * dwell;
       double laid = config.depositRate * press * dt * gate * br.gain * dwellBoost;
       final double consumeRate = (1.0 - 0.9 * config.mileage).clamp(0.1, 1.0);
       double consumed = laid * consumeRate;

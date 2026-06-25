@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: drip-color-dry · 06-24 #17',
+            child: const Text('build: dwell-tunable · 06-24 #18',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -207,6 +207,8 @@ class _ControlPanelState extends State<ControlPanel> {
               (v) => cfg.bristleLength = v),
           _slider('Paint displacement', cfg.displacement, 0, 1,
               (v) => cfg.displacement = v),
+          _slider('Dwell buildup', cfg.dwellBuildup, 0, 3,
+              (v) => cfg.dwellBuildup = v),
           _slider('Pressure', c.pressure, 0.05, 1, (v) => c.pressure = v),
 
           const SizedBox(height: 16),
