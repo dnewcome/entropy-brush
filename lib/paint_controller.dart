@@ -118,6 +118,20 @@ class PaintController extends ChangeNotifier {
 
   bool _hasLast = false;
   double _lastX = 0, _lastY = 0;
+
+  // Stroke-velocity tracking for dwell (slow strokes pool paint → drips).
+  final Stopwatch _strokeClock = Stopwatch();
+  double _lastMoveT = 0;
+  // Replay reconstructs dwell from the recorded op timestamps.
+  double _rpLastT = 0, _rpLastX = 0, _rpLastY = 0;
+
+  /// Dwell 0..1 from stroke speed (grid px / s): slow → 1, fast → 0.
+  static double _dwell(double dist, double dt) {
+    if (dt <= 1e-4) return 0.0;
+    final double speed = dist / dt;
+    const double kRef = 700.0; // speed at which dwell = 0.5
+    return (kRef / (speed + kRef)).clamp(0.0, 1.0);
+  }
   bool _stroking = false;
 
   // --- twin recorder & replay state ---
@@ -191,8 +205,14 @@ class PaintController extends ChangeNotifier {
 
   void strokeMove(double gx, double gy, {double? pressure}) {
     final pr = pressure ?? _pressure;
+    // Real-time dwell: how slowly the brush is moving right now.
+    final double now = _strokeClock.elapsedMicroseconds / 1e6;
+    final double dt = now - _lastMoveT;
+    _lastMoveT = now;
+    final double dist =
+        math.sqrt((gx - _lastX) * (gx - _lastX) + (gy - _lastY) * (gy - _lastY));
     _rec(TwinOp(_now, TwinOpKind.move, x: gx, y: gy, pressure: pr));
-    _doMove(gx, gy, pr);
+    _doMove(gx, gy, pr, _dwell(dist, dt));
   }
 
   void strokeEnd() {
@@ -206,13 +226,19 @@ class PaintController extends ChangeNotifier {
     _lastY = gy;
     _hasLast = true;
     _stroking = true;
+    _strokeClock
+      ..reset()
+      ..start();
+    _lastMoveT = 0;
+    brush.dwell = 0;
   }
 
-  void _doMove(double gx, double gy, double pr) {
+  void _doMove(double gx, double gy, double pr, [double dwell = 0]) {
     if (!_hasLast) {
       _doStart(gx, gy, pr);
       return;
     }
+    brush.dwell = dwell;
     final double dx = gx - _lastX;
     final double dy = gy - _lastY;
     final double dist = math.sqrt(dx * dx + dy * dy);
@@ -231,6 +257,8 @@ class PaintController extends ChangeNotifier {
   }
 
   void _doEnd() {
+    // Releasing the brush leaves a pool where it dwelled — drips start here.
+    brush.layPool(grid);
     brush.end();
     _stroking = false;
     _hasLast = false;
@@ -352,9 +380,17 @@ class PaintController extends ChangeNotifier {
       switch (op.kind) {
         case TwinOpKind.down:
           _doStart(op.x, op.y, op.pressure);
+          _rpLastT = op.t;
+          _rpLastX = op.x;
+          _rpLastY = op.y;
           break;
         case TwinOpKind.move:
-          _doMove(op.x, op.y, op.pressure);
+          final double dist = math.sqrt((op.x - _rpLastX) * (op.x - _rpLastX) +
+              (op.y - _rpLastY) * (op.y - _rpLastY));
+          _doMove(op.x, op.y, op.pressure, _dwell(dist, op.t - _rpLastT));
+          _rpLastT = op.t;
+          _rpLastX = op.x;
+          _rpLastY = op.y;
           break;
         case TwinOpKind.up:
           _doEnd();

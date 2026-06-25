@@ -122,6 +122,10 @@ class Brush {
   double x = 0, y = 0;
   bool _down = false;
 
+  /// How much the brush is dwelling (0 = fast stroke, 1 = slow/stopped). Slow
+  /// strokes lay more paint per length, so paint pools where you slow down.
+  double dwell = 0;
+
   // Loaded pigment for the next reload.
   double _loadR = 0.1, _loadG = 0.2, _loadB = 0.7;
 
@@ -187,6 +191,28 @@ class Brush {
 
   void end() => _down = false;
 
+  /// Release a pool of paint at the lift point, scaled by how much the brush was
+  /// dwelling (slow lift → bigger pool). Drawn from the remaining load, so it's
+  /// conserved. This is where end-of-stroke drips originate.
+  void layPool(PaintGrid grid) {
+    if (bristles.isEmpty || dwell <= 0.02) return;
+    final double frac = (0.18 * dwell).clamp(0.0, 0.5);
+    final int n = bristles.length;
+    double amount = 0, pr = 0, pg = 0, pb = 0;
+    for (final br in bristles) {
+      amount += br.load * frac;
+      pr += br.r;
+      pg += br.g;
+      pb += br.b;
+    }
+    if (amount <= 0) return;
+    grid.deposit(x, y, config.headRadius * 0.55, amount, pr / n, pg / n, pb / n,
+        coverage: 1.0);
+    for (final br in bristles) {
+      br.load -= br.load * frac;
+    }
+  }
+
   /// Advance the brush toward sample [s] over [dt] seconds, depositing into and
   /// lifting from [grid]. Pressure scales how hard bristles press (more contact,
   /// more deposit). The head is moved to [s]; tips follow by spring + damping.
@@ -244,7 +270,10 @@ class Brush {
       final double loadFrac =
           config.loadCapacity > 0 ? br.load / config.loadCapacity : 0.0;
       final double gate = (loadFrac * 3.0).clamp(0.0, 1.0);
-      double laid = config.depositRate * press * dt * gate * br.gain;
+      // Dwell boost: slow strokes lay more paint per length (so it pools where
+      // the brush slows and at stroke ends — the classic place drips begin).
+      final double dwellBoost = 1.0 + 1.2 * dwell;
+      double laid = config.depositRate * press * dt * gate * br.gain * dwellBoost;
       final double consumeRate = (1.0 - 0.9 * config.mileage).clamp(0.1, 1.0);
       double consumed = laid * consumeRate;
       if (consumed > br.load) {
