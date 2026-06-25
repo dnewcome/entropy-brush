@@ -168,9 +168,12 @@ hardware. See [ADR 0002](docs/adr/0002-machine-interface-boundary.md) and the
 
 ## Design docs
 
-Architecture decisions live in [`docs/`](docs/), e.g.
-[ADR 0001: paint representation (grid vs. Gaussian splats)](docs/adr/0001-paint-representation-grid-vs-splats.md)
-and [ADR 0002: the machine-driver boundary](docs/adr/0002-machine-interface-boundary.md).
+- **[The paint simulation](docs/simulation.md)** — the full physical model
+  (brush, deposition, mixing, wet flow, drips, drying, rendering) with equations
+  and a parameter table.
+- Architecture decisions in [`docs/`](docs/):
+  [ADR 0001 (grid vs. Gaussian splats)](docs/adr/0001-paint-representation-grid-vs-splats.md),
+  [ADR 0002 (machine-driver boundary)](docs/adr/0002-machine-interface-boundary.md).
 
 - `BRIEF.md` — the original kickoff intent.
 - [`MODELING.md`](MODELING.md) — how we might learn the brush/paint model from

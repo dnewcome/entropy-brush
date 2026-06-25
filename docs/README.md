@@ -2,6 +2,12 @@
 
 Architecture Decision Records (ADRs) and design notes for entropy-brush.
 
+## Reference
+
+- [The paint simulation](simulation.md) — the full model: brush/bristles,
+  deposition & dwell, the paint grid, Kubelka-Munk mixing, wet flow + drips
+  (yield-stress) + drying, the relief render, the 3D slab, and a parameter table.
+
 ## ADRs
 
 - [0001 — Paint representation: field grid vs. Gaussian splats](adr/0001-paint-representation-grid-vs-splats.md)
