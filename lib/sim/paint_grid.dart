@@ -409,84 +409,137 @@ class PaintGrid {
     }
 
     final double k = (flow / visc).clamp(0.0, 0.2);
+    // Every outflow a cell wants is collected first, then the whole set is
+    // scaled to fit a single budget (what the cell actually holds), so leveling
+    // and gravity can never *together* draw more paint than is present. Without
+    // this joint cap, each term stays individually bounded but their sum can
+    // exceed the cell's thickness; the clamp-at-zero on apply then turns that
+    // over-draw into created paint, which feeds back and blows the field up to
+    // Infinity (the "Infinity or NaN toInt" crash). Push-only (each cell pushes
+    // downhill to its 4 neighbours) keeps all of a cell's outflow in one place
+    // so it can be budgeted; it is equivalent to the old pairwise leveling.
     for (int y = y0; y <= y1; y++) {
       final int base = y * width;
       for (int x = x0; x <= x1; x++) {
         final int i = base + x;
         if (wet[i] <= 0.002) continue;
         final double hi = thickness[i];
-        // +x and +y neighbours (each cell pair handled once). The uphill cell
-        // pushes paint downhill, gated by its own wetness.
-        for (int n = 0; n < 2; n++) {
-          final int j = n == 0 ? i + 1 : i + width;
-          final double hj = thickness[j];
-          final double diff = hi - hj;
-          if (diff == 0) continue;
-          final double gate = diff > 0 ? wet[i] : wet[j];
-          if (gate <= 0.002) continue;
-          final double f = k * gate * diff;
-          dH[i] -= f;
-          dH[j] += f;
-          // Paint carries its colour to the cell it flows into.
-          final double amt = f.abs();
-          if (f > 0) {
-            inA[j] += amt;
-            inR[j] += amt * r[i];
-            inG[j] += amt * g[i];
-            inB[j] += amt * b[i];
-            inW[j] += amt * wet[i];
-          } else {
-            inA[i] += amt;
-            inR[i] += amt * r[j];
-            inG[i] += amt * g[j];
-            inB[i] += amt * b[j];
-            inW[i] += amt * wet[j];
-          }
+        final double weti = wet[i];
+
+        // Leveling: push to any lower 4-neighbour, gated by this cell's wetness.
+        double oL = 0, oR = 0, oU = 0, oD = 0;
+        if (k > 0 && weti > 0.002) {
+          final double kw = k * weti;
+          final double hl = thickness[i - 1];
+          final double hr = thickness[i + 1];
+          final double hu = thickness[i - width];
+          final double hd = thickness[i + width];
+          if (hi > hl) oL = kw * (hi - hl);
+          if (hi > hr) oR = kw * (hi - hr);
+          if (hi > hu) oU = kw * (hi - hu);
+          if (hi > hd) oD = kw * (hi - hd);
         }
 
-        // Gravity (yield-stress): only the paint ABOVE the holding film
-        // (thickness − dripYield) can flow; it slides downhill into the
-        // downstream neighbour, leaving the film behind. Thin paint holds.
+        // Gravity (yield-stress): only paint ABOVE the holding film
+        // (thickness − yld) is mobile; it slides into the downstream
+        // neighbour(s), leaving the film behind. Thin paint holds.
+        double gX = 0, gY = 0;
+        int gXj = i, gYj = i;
         if (grav) {
-          final double mobile = thickness[i] - yld;
+          final double mobile = hi - yld;
           if (mobile > 0) {
-            final double wi = wet[i] / visc; // viscous paint runs slower
-            // Horizontal drift with a smooth low-frequency wander, so the drip
-            // meanders left/right as it falls instead of running dead-straight.
+            final double wi = weti / visc; // viscous paint runs slower
+            // Smooth low-frequency wander so the drip meanders left/right as it
+            // falls instead of running dead-straight.
             double gxc = gravX;
             if (wander > 0) {
               final double nz = valueNoise(x * 0.03 + dripPhase, y * 0.06);
               gxc += (nz - 0.5) * 2.0 * wander;
             }
+            final double gcap = mobile * 0.7; // gravity alone keeps the film
             if (gxc != 0) {
-              final int j = gxc > 0 ? i + 1 : i - 1;
-              double amt = gxc.abs() * mobile * wi;
-              if (amt > mobile * 0.7) amt = mobile * 0.7;
-              if (amt > 0) {
-                dH[i] -= amt;
-                dH[j] += amt;
-                inA[j] += amt;
-                inR[j] += amt * r[i];
-                inG[j] += amt * g[i];
-                inB[j] += amt * b[i];
-                inW[j] += amt * wi;
-              }
+              gXj = gxc > 0 ? i + 1 : i - 1;
+              gX = gxc.abs() * mobile * wi;
+              if (gX > gcap) gX = gcap;
             }
             if (gravY != 0) {
-              final int j = gravY > 0 ? i + width : i - width;
-              double amt = gravY.abs() * mobile * wi;
-              if (amt > mobile * 0.7) amt = mobile * 0.7;
-              if (amt > 0) {
-                dH[i] -= amt;
-                dH[j] += amt;
-                inA[j] += amt;
-                inR[j] += amt * r[i];
-                inG[j] += amt * g[i];
-                inB[j] += amt * b[i];
-                inW[j] += amt * wi;
-              }
+              gYj = gravY > 0 ? i + width : i - width;
+              gY = gravY.abs() * mobile * wi;
+              if (gY > gcap) gY = gcap;
             }
           }
+        }
+
+        // Joint budget: total outflow can't exceed what the cell holds. Leave a
+        // sliver behind so a cell never fully empties in one step (stability).
+        double out = oL + oR + oU + oD + gX + gY;
+        if (out <= 0) continue;
+        final double budget = hi * 0.85;
+        if (out > budget) {
+          final double s = budget / out;
+          oL *= s;
+          oR *= s;
+          oU *= s;
+          oD *= s;
+          gX *= s;
+          gY *= s;
+          out = budget;
+        }
+
+        dH[i] -= out;
+        // All outflow carries this cell's colour and wetness to where it lands.
+        final double ri = r[i], gi = g[i], bi = b[i];
+        if (oL > 0) {
+          final int j = i - 1;
+          dH[j] += oL;
+          inA[j] += oL;
+          inR[j] += oL * ri;
+          inG[j] += oL * gi;
+          inB[j] += oL * bi;
+          inW[j] += oL * weti;
+        }
+        if (oR > 0) {
+          final int j = i + 1;
+          dH[j] += oR;
+          inA[j] += oR;
+          inR[j] += oR * ri;
+          inG[j] += oR * gi;
+          inB[j] += oR * bi;
+          inW[j] += oR * weti;
+        }
+        if (oU > 0) {
+          final int j = i - width;
+          dH[j] += oU;
+          inA[j] += oU;
+          inR[j] += oU * ri;
+          inG[j] += oU * gi;
+          inB[j] += oU * bi;
+          inW[j] += oU * weti;
+        }
+        if (oD > 0) {
+          final int j = i + width;
+          dH[j] += oD;
+          inA[j] += oD;
+          inR[j] += oD * ri;
+          inG[j] += oD * gi;
+          inB[j] += oD * bi;
+          inW[j] += oD * weti;
+        }
+        if (gX > 0) {
+          dH[gXj] += gX;
+          inA[gXj] += gX;
+          inR[gXj] += gX * ri;
+          inG[gXj] += gX * gi;
+          inB[gXj] += gX * bi;
+          inW[gXj] += gX * weti;
+        }
+        if (gY > 0) {
+          dH[gYj] += gY;
+          inA[gYj] += gY;
+          inR[gYj] += gY * ri;
+          inG[gYj] += gY * gi;
+          inB[gYj] += gY * bi;
+          inW[gYj] += gY * weti;
         }
       }
     }
@@ -555,8 +608,14 @@ class PaintGrid {
     final double inv = 1.0 / maxHeight;
     for (int i = 0, p = 0; i < thickness.length; i++, p += 4) {
       double h = (canvasHeight[i] + thickness[i]) * inv;
-      if (h < 0) h = 0;
-      if (h > 1) h = 1;
+      // `!(h > 0)` is deliberately written so it also catches NaN (every
+      // comparison with NaN is false), which a plain `h < 0` clamp would let
+      // slip through to `.round()` and crash the renderer every frame.
+      if (!(h > 0)) {
+        h = 0;
+      } else if (h > 1) {
+        h = 1;
+      }
       final int q = (h * 65535.0).round();
       out[p] = (q >> 8) & 0xFF;
       out[p + 1] = q & 0xFF;
@@ -570,9 +629,11 @@ class PaintGrid {
   Uint8List encodeAlbedoRGBA() {
     final out = Uint8List(width * height * 4);
     for (int i = 0, p = 0; i < thickness.length; i++, p += 4) {
-      out[p] = (r[i] * 255.0).round().clamp(0, 255);
-      out[p + 1] = (g[i] * 255.0).round().clamp(0, 255);
-      out[p + 2] = (b[i] * 255.0).round().clamp(0, 255);
+      // _u8 clamps and rejects non-finite values, so a stray NaN can't crash
+      // `.round()` here either.
+      out[p] = _u8(r[i]);
+      out[p + 1] = _u8(g[i]);
+      out[p + 2] = _u8(b[i]);
       out[p + 3] = 255;
     }
     return out;
@@ -584,6 +645,14 @@ class PaintGrid {
 // Treat each RGB channel as a reflectance and mix in K/S (absorption over
 // scattering) space, which is how real pigments combine. Mixing [base] with
 // pigment [pig] at concentration [t] (0..1).
+
+/// Channel value (0..1) → 0..255, rejecting non-finite values so a stray
+/// NaN/Infinity can never reach `.round()` and crash the renderer.
+int _u8(double v) {
+  if (!(v > 0)) return 0; // NaN or ≤0
+  if (v >= 1) return 255;
+  return (v * 255.0).round();
+}
 
 double _smoothstep(double edge0, double edge1, double x) {
   if (edge1 <= edge0) return x >= edge1 ? 1.0 : 0.0;

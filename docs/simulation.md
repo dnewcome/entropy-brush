@@ -144,6 +144,18 @@ Each frame the controller runs `flowStep` over the **wet bounding box** only
 (localized cost). It combines leveling, gravity drips, and drying, all
 **conservative** (paint is moved, never created/destroyed).
 
+**Joint outflow budget (why it stays conservative).** Leveling and gravity each
+want to draw paint out of a cell. Individually each term is bounded, but their
+*sum* can exceed what the cell holds — and the clamp that stops thickness going
+negative would then turn the over-draw into *created* paint at the neighbours,
+raising their mobile paint and feeding back until the height field explodes to
+`Infinity`. So each cell first **collects all the outflow it wants** (four
+downhill leveling pushes + both gravity axes), and if the total exceeds what it
+holds, scales the whole set down by one factor — nothing leaves a cell that
+wasn't there. Leveling is therefore a downhill *push* to the 4-neighbourhood
+(equivalent to the old pairwise form) so all of a cell's outflow lives in one
+place and can be budgeted together.
+
 ### Leveling (surface tension / oozing)
 
 Wet paint diffuses to even out height, carrying colour **and** wetness with the
@@ -263,7 +275,13 @@ is an exact **inverse homography** — round-trip verified in `slab_view_test`.
 ## 7. Properties & verification
 
 - **Conservation** — deposition, plowing, leveling, drips, and drying all move
-  or transform paint without spurious creation/loss (tested).
+  or transform paint without spurious creation/loss (tested). The wet-flow step
+  enforces this with a per-cell joint outflow budget, so even runny paint on a
+  steeply tilted canvas can't manufacture mass or blow up to `Infinity`
+  (`drip_blowup_test`: 600 aggressive steps stay finite and mass-exact).
+- **Crash safety** — the height/albedo encoders reject non-finite values
+  (`NaN`/`Infinity` are clamped, not fed to `.round()`), so a single bad cell can
+  never freeze the renderer. (Defence in depth behind the conservation invariant.)
 - **Determinism** — the same op stream reproduces the same painting; dwell is
   derived from recorded timestamps so replay/print stays faithful
   (`twin_replay_test`). (Wet flow is real-time-driven, so the in-app *preview*
