@@ -352,11 +352,15 @@ class PaintGrid {
   /// created. [flow] is the leveling rate, [dryTime] seconds to mostly dry.
   /// [gravX]/[gravY] are the in-plane gravity vector (cells of drift per step);
   /// non-zero makes wet paint run downhill (drips), on top of the leveling.
+  /// [dripYield] is the yield-stress threshold: paint is a yield-stress fluid,
+  /// so only thickness ABOVE [dripYield] flows — thinner paint holds, and a drip
+  /// leaves a ~[dripYield] film behind, which depletes it and ends the run.
   void flowStep(double dt,
       {double flow = 0.2,
       double dryTime = 3.0,
       double gravX = 0,
-      double gravY = 0}) {
+      double gravY = 0,
+      double dripYield = 0.0}) {
     final bool grav = gravX != 0 || gravY != 0;
     if (!_hasWet || (flow <= 0 && !grav)) return;
     final int x0 = math.max(1, _wetMinX);
@@ -421,35 +425,38 @@ class PaintGrid {
           }
         }
 
-        // Gravity: wet paint slides downhill in the (gravX, gravY) direction,
-        // conservatively into the downstream neighbour — this makes drips.
+        // Gravity (yield-stress): only the paint ABOVE the holding film
+        // (thickness − dripYield) can flow; it slides downhill into the
+        // downstream neighbour, leaving the film behind. Thin paint holds.
         if (grav) {
-          final double th = thickness[i];
-          final double wi = wet[i];
-          if (gravX != 0) {
-            final int j = gravX > 0 ? i + 1 : i - 1;
-            double amt = gravX.abs() * th * wi;
-            if (amt > th * 0.5) amt = th * 0.5;
-            if (amt > 0) {
-              dH[i] -= amt;
-              dH[j] += amt;
-              inA[j] += amt;
-              inR[j] += amt * r[i];
-              inG[j] += amt * g[i];
-              inB[j] += amt * b[i];
+          final double mobile = thickness[i] - dripYield;
+          if (mobile > 0) {
+            final double wi = wet[i];
+            if (gravX != 0) {
+              final int j = gravX > 0 ? i + 1 : i - 1;
+              double amt = gravX.abs() * mobile * wi;
+              if (amt > mobile * 0.5) amt = mobile * 0.5;
+              if (amt > 0) {
+                dH[i] -= amt;
+                dH[j] += amt;
+                inA[j] += amt;
+                inR[j] += amt * r[i];
+                inG[j] += amt * g[i];
+                inB[j] += amt * b[i];
+              }
             }
-          }
-          if (gravY != 0) {
-            final int j = gravY > 0 ? i + width : i - width;
-            double amt = gravY.abs() * th * wi;
-            if (amt > th * 0.5) amt = th * 0.5;
-            if (amt > 0) {
-              dH[i] -= amt;
-              dH[j] += amt;
-              inA[j] += amt;
-              inR[j] += amt * r[i];
-              inG[j] += amt * g[i];
-              inB[j] += amt * b[i];
+            if (gravY != 0) {
+              final int j = gravY > 0 ? i + width : i - width;
+              double amt = gravY.abs() * mobile * wi;
+              if (amt > mobile * 0.5) amt = mobile * 0.5;
+              if (amt > 0) {
+                dH[i] -= amt;
+                dH[j] += amt;
+                inA[j] += amt;
+                inR[j] += amt * r[i];
+                inG[j] += amt * g[i];
+                inB[j] += amt * b[i];
+              }
             }
           }
         }

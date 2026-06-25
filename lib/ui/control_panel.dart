@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: gravity-drips · 06-24 #14',
+            child: const Text('build: drip-yield · 06-24 #15',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -228,6 +228,8 @@ class _ControlPanelState extends State<ControlPanel> {
           ),
           _slider('Gravity strength', c.gravityStrength, 0.1, 3.0,
               (v) => c.gravityStrength = v),
+          _slider('Drip threshold', c.dripYield, 0.0, 0.4,
+              (v) => c.dripYield = v),
 
           const SizedBox(height: 16),
           _heading('Paint'),

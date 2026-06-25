@@ -440,6 +440,7 @@ class PaintController extends ChangeNotifier {
   double dryTime = 3.0; // seconds for wet paint to mostly set
   bool gravityDrips = false; // world-down gravity → drips, per canvas tilt
   double gravityStrength = 1.0;
+  double dripYield = 0.07; // yield threshold: paint thinner than this won't drip
   final Stopwatch _frameClock = Stopwatch()..start();
 
   /// Pump one frame: advance replay/squeeze, run wet-paint flow, then refresh
@@ -467,13 +468,17 @@ class PaintController extends ChangeNotifier {
       double gx = 0, gy = 0;
       if (gravityDrips) {
         final double mag = math.cos(tiltX);
-        final double base = 0.12 * gravityStrength / iters;
+        final double base = 0.3 * gravityStrength / iters;
         gx = math.sin(canvasRoll) * mag * base;
         gy = math.cos(canvasRoll) * mag * base;
       }
       for (int it = 0; it < iters; it++) {
         grid.flowStep(sdt,
-            flow: flowK, dryTime: dryTime, gravX: gx, gravY: gy);
+            flow: flowK,
+            dryTime: dryTime,
+            gravX: gx,
+            gravY: gy,
+            dripYield: dripYield);
         palette.flowStep(sdt, flow: doFlow ? 0.16 : 0.0, dryTime: dryTime * 0.6);
       }
     }

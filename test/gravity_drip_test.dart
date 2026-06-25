@@ -1,35 +1,31 @@
 import 'package:entropy_brush/sim/paint_grid.dart';
-({double total, double comY}) stats(PaintGrid g) {
-  double t = 0, wy = 0;
-  for (int y = 0; y < g.height; y++) {
-    for (int x = 0; x < g.width; x++) {
-      final th = g.thickness[y * g.width + x];
-      if (th > 0) { t += th; wy += th * y; }
-    }
+double comY(double amount, double yield, double gravY) {
+  final g = PaintGrid(160, 320);
+  g.pile(80, 50, 6, amount, 0.2, 0.3, 0.7);
+  for (int s = 0; s < 90; s++) {
+    g.flowStep(1 / 60, flow: 0, dryTime: 1000, gravX: 0, gravY: gravY, dripYield: yield);
   }
-  return (total: t, comY: t > 0 ? wy / t : 0);
+  double t = 0, wy = 0;
+  for (int i = 0; i < g.thickness.length; i++) {
+    final th = g.thickness[i];
+    if (th > 0) { t += th; wy += th * (i ~/ g.width); }
+  }
+  return t > 0 ? wy / t - 50 : 0; // downward COM shift
+}
+double peakOf(double amount) {
+  final g = PaintGrid(160, 320);
+  g.pile(80, 50, 6, amount, 0.2, 0.3, 0.7);
+  double p = 0;
+  for (final th in g.thickness) { if (th > p) p = th; }
+  return p;
 }
 void main() {
-  // Gravity ON, pointing +y (down): a wet blob should drip downward.
-  final g = PaintGrid(200, 240);
-  g.pile(100, 60, 6, 6.0, 0.2, 0.3, 0.7);
-  final before = stats(g);
-  for (int i = 0; i < 40; i++) {
-    g.flowStep(1 / 60, flow: 0, dryTime: 1000, gravX: 0, gravY: 0.12);
-  }
-  final after = stats(g);
-  print('center-of-mass y: ${before.comY.toStringAsFixed(1)} -> ${after.comY.toStringAsFixed(1)} '
-      '(drips DOWN: ${after.comY > before.comY + 3})');
-  print('paint conserved: ${before.total.toStringAsFixed(2)} -> ${after.total.toStringAsFixed(2)} '
-      '(${(after.total / before.total - 1).abs() < 0.02})');
-
-  // Gravity OFF (and no leveling): nothing should move.
-  final g2 = PaintGrid(200, 240);
-  g2.pile(100, 60, 6, 6.0, 0.2, 0.3, 0.7);
-  final b2 = stats(g2);
-  for (int i = 0; i < 40; i++) {
-    g2.flowStep(1 / 60, flow: 0, dryTime: 1000, gravX: 0, gravY: 0);
-  }
-  final a2 = stats(g2);
-  print('no gravity, no flow -> static: ${(a2.comY - b2.comY).abs() < 0.01}');
+  const yield = 0.08;
+  print('thin  peak=${peakOf(1.5).toStringAsFixed(3)}   moved ${comY(1.5, yield, 0.3).toStringAsFixed(1)}');
+  print('thick peak=${peakOf(10).toStringAsFixed(3)}    moved ${comY(10, yield, 0.3).toStringAsFixed(1)}');
+  print('xthick peak=${peakOf(25).toStringAsFixed(3)}   moved ${comY(25, yield, 0.3).toStringAsFixed(1)}');
+  final thin = comY(1.5, yield, 0.3), thick = comY(10, yield, 0.3), xthick = comY(25, yield, 0.3);
+  print('thin holds: ${thin.abs() < 1.0}');
+  print('thick drips: ${thick > 2}');
+  print('more paint -> longer drip: ${xthick > thick + 3}');
 }
