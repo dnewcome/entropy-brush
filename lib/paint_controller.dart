@@ -438,6 +438,8 @@ class PaintController extends ChangeNotifier {
   // --- wet-paint flow ---
   double flowRate = 0.4; // 0..1 leveling/oozing strength (drives substep count)
   double dryTime = 3.0; // seconds for wet paint to mostly set
+  bool gravityDrips = false; // world-down gravity → drips, per canvas tilt
+  double gravityStrength = 1.0;
   final Stopwatch _frameClock = Stopwatch()..start();
 
   /// Pump one frame: advance replay/squeeze, run wet-paint flow, then refresh
@@ -454,12 +456,25 @@ class PaintController extends ChangeNotifier {
     if (_applySpaceMouse(dt)) notifyListeners();
     // Strength drives how many leveling substeps run per frame (each capped for
     // stability), so high flow gives obvious oozing without going unstable.
-    if (flowRate > 0.01) {
-      final int iters = math.max(1, (flowRate * 6).round());
+    final bool doFlow = flowRate > 0.01;
+    if (doFlow || gravityDrips) {
+      final int iters = doFlow ? math.max(1, (flowRate * 6).round()) : 1;
       final double sdt = dt / iters;
+      final double flowK = doFlow ? 0.2 : 0.0;
+      // World-down gravity projected onto the tilted canvas plane → a drip
+      // vector in grid coords. cos(tiltX) is full when face-on, zero when
+      // pitched flat; canvasRoll rotates the drip direction with the canvas.
+      double gx = 0, gy = 0;
+      if (gravityDrips) {
+        final double mag = math.cos(tiltX);
+        final double base = 0.12 * gravityStrength / iters;
+        gx = math.sin(canvasRoll) * mag * base;
+        gy = math.cos(canvasRoll) * mag * base;
+      }
       for (int it = 0; it < iters; it++) {
-        grid.flowStep(sdt, flow: 0.2, dryTime: dryTime);
-        palette.flowStep(sdt, flow: 0.16, dryTime: dryTime * 0.6);
+        grid.flowStep(sdt,
+            flow: flowK, dryTime: dryTime, gravX: gx, gravY: gy);
+        palette.flowStep(sdt, flow: doFlow ? 0.16 : 0.0, dryTime: dryTime * 0.6);
       }
     }
 

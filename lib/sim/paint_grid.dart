@@ -350,8 +350,15 @@ class PaintGrid {
   /// gravity), oozing into neighbours and bleeding colour wet-on-wet, then dries
   /// a little so impasto eventually sets. Conservative — paint is moved, not
   /// created. [flow] is the leveling rate, [dryTime] seconds to mostly dry.
-  void flowStep(double dt, {double flow = 0.2, double dryTime = 3.0}) {
-    if (!_hasWet || flow <= 0) return;
+  /// [gravX]/[gravY] are the in-plane gravity vector (cells of drift per step);
+  /// non-zero makes wet paint run downhill (drips), on top of the leveling.
+  void flowStep(double dt,
+      {double flow = 0.2,
+      double dryTime = 3.0,
+      double gravX = 0,
+      double gravY = 0}) {
+    final bool grav = gravX != 0 || gravY != 0;
+    if (!_hasWet || (flow <= 0 && !grav)) return;
     final int x0 = math.max(1, _wetMinX);
     final int y0 = math.max(1, _wetMinY);
     final int x1 = math.min(width - 2, _wetMaxX);
@@ -413,6 +420,39 @@ class PaintGrid {
             inB[i] += amt * b[j];
           }
         }
+
+        // Gravity: wet paint slides downhill in the (gravX, gravY) direction,
+        // conservatively into the downstream neighbour — this makes drips.
+        if (grav) {
+          final double th = thickness[i];
+          final double wi = wet[i];
+          if (gravX != 0) {
+            final int j = gravX > 0 ? i + 1 : i - 1;
+            double amt = gravX.abs() * th * wi;
+            if (amt > th * 0.5) amt = th * 0.5;
+            if (amt > 0) {
+              dH[i] -= amt;
+              dH[j] += amt;
+              inA[j] += amt;
+              inR[j] += amt * r[i];
+              inG[j] += amt * g[i];
+              inB[j] += amt * b[i];
+            }
+          }
+          if (gravY != 0) {
+            final int j = gravY > 0 ? i + width : i - width;
+            double amt = gravY.abs() * th * wi;
+            if (amt > th * 0.5) amt = th * 0.5;
+            if (amt > 0) {
+              dH[i] -= amt;
+              dH[j] += amt;
+              inA[j] += amt;
+              inR[j] += amt * r[i];
+              inG[j] += amt * g[i];
+              inB[j] += amt * b[i];
+            }
+          }
+        }
       }
     }
 
@@ -439,6 +479,9 @@ class PaintGrid {
           _touch(x, y);
         }
         double w = wet[i];
+        // Cells the drip ran into stay wet so it keeps running — drying still
+        // bounds how far a drip travels before it sets.
+        if (grav && inA[i] > 0.0008 && w < 0.5) w = 0.5;
         if (w > 0) {
           w *= dryF;
           if (w < 0.004) w = 0;
