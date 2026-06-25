@@ -145,10 +145,18 @@ hardware. See [ADR 0002](docs/adr/0002-machine-interface-boundary.md) and the
 
 ## Roadmap
 
+- **Time-based deposition** — deposit `∝ time-in-contact` instead of
+  per-distance, so velocity → volume falls out from first principles: fast
+  strokes lay thin, slowing builds up, and holding the brush still pools paint
+  (drips emerge naturally). Would retire the current dwell-boost and
+  terminal-pool approximations. (Deferred; bigger change — deposition becomes
+  real-time-driven, including while the brush is stationary.)
 - **Depth-camera arm tracking** → live painting from real arm motion.
 - **Brush calibration** so the sim predicts the physical brush.
 - Higher-resolution / stroke-vector re-render for infinite-zoom detail
   (see ADR 0001).
+- **Drip fingering/rivulets** — thickness-dependent instability so runs
+  self-focus into narrowing teardrops instead of smooth widening runs.
 - *(In the separate paintbot project:)* G-code emitter that reads the `.json`
   performance and drives the machine.
 
