@@ -479,6 +479,8 @@ class PaintController extends ChangeNotifier {
   double gravityStrength = 1.0;
   double dripYield = 0.07; // yield threshold: paint thinner than this won't drip
   double dripWander = 0.4; // lateral meander so drips aren't identical
+  bool spinning = false; // centrifugal: spinning the canvas flings paint outward
+  double spinRate = 1.5; // signed spin speed (sign = direction; magnitude = rpm)
   final Stopwatch _frameClock = Stopwatch()..start();
 
   /// Pump one frame: advance replay/squeeze, run wet-paint flow, then refresh
@@ -496,12 +498,13 @@ class PaintController extends ChangeNotifier {
     // Strength drives how many leveling substeps run per frame (each capped for
     // stability), so high flow gives obvious oozing without going unstable.
     final bool doFlow = flowRate > 0.01;
-    if (doFlow || gravityDrips) {
+    final bool directional = gravityDrips || spinning;
+    if (doFlow || directional) {
       final int iters = doFlow ? math.max(1, (flowRate * 6).round()) : 1;
       final double sdt = dt / iters;
-      // When gravity drips are on, drop the isotropic leveling way down so the
-      // paint RUNS DOWN (directional) instead of bleeding out in all directions.
-      final double flowK = !doFlow ? 0.0 : (gravityDrips ? 0.03 : 0.2);
+      // With a directional body force on (gravity or spin), drop the isotropic
+      // leveling way down so paint RUNS/FLINGS instead of bleeding out evenly.
+      final double flowK = !doFlow ? 0.0 : (directional ? 0.03 : 0.2);
       // World-down gravity projected onto the tilted canvas plane → a drip
       // vector in grid coords. cos(tiltX) is full when face-on, zero when
       // pitched flat; canvasRoll rotates the drip direction with the canvas.
@@ -512,6 +515,18 @@ class PaintController extends ChangeNotifier {
         gx = math.sin(canvasRoll) * mag * base;
         gy = math.cos(canvasRoll) * mag * base;
       }
+      // Centrifugal grows with ω² (outward), Coriolis with ω (tangential,
+      // signed). Pivot is the canvas centre. Scaled so mid-radius paint
+      // migrates at a visible-but-stable rate; the joint outflow budget in
+      // flowStep keeps it conservative no matter how hard you spin.
+      double spinCf = 0, spinCor = 0, spinCx = 0, spinCy = 0;
+      if (spinning) {
+        final double w = spinRate;
+        spinCf = 0.02 * w * w / iters;
+        spinCor = 0.010 * w / iters;
+        spinCx = grid.width / 2.0;
+        spinCy = grid.height / 2.0;
+      }
       for (int it = 0; it < iters; it++) {
         grid.flowStep(sdt,
             flow: flowK,
@@ -519,7 +534,11 @@ class PaintController extends ChangeNotifier {
             gravX: gx,
             gravY: gy,
             dripYield: dripYield,
-            dripWander: dripWander);
+            dripWander: dripWander,
+            spinCf: spinCf,
+            spinCor: spinCor,
+            spinCx: spinCx,
+            spinCy: spinCy);
         palette.flowStep(sdt, flow: doFlow ? 0.16 : 0.0, dryTime: dryTime * 0.6);
       }
     }

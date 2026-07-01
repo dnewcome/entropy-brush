@@ -197,8 +197,33 @@ oozes and sheets down. **Drip wander** adds a smooth low-frequency lateral noise
 same shape twice.
 
 **Gravity must dominate leveling** or paint bleeds isotropically instead of
-running down. So when **Gravity drips** is on, leveling is suppressed to `0.03`.
-(Verified: drip region aspect h/w ≈ 2.3 vs isotropic bleed ≈ 1.2.)
+running down. So when a **directional body force** (gravity drips or spin) is
+on, leveling is suppressed to `0.03`. (Verified: drip region aspect h/w ≈ 2.3 vs
+isotropic bleed ≈ 1.2.)
+
+### Spin — centrifugal + Coriolis
+
+Gravity is one special case of a **body force**: a uniform drift vector. Spinning
+the canvas replaces it with a **position-dependent** one. In the canvas's
+co-rotating frame a cell at offset **r** from the pivot feels centrifugal
+acceleration ω²·**r** pointing straight out, so the outward drift is simply
+`spinCf · (x−cx, y−cy)` — zero at the pivot, growing to the rim. A Coriolis term
+(∝ ω, perpendicular, signed by spin direction) curls the outward streaks into
+spirals like real spin art:
+
+```
+dgx = gravX + spinCf·(x−cx) + spinCor·(y−cy)
+dgy = gravY + spinCf·(y−cy) − spinCor·(x−cx)     spinCf ∝ ω²,  spinCor ∝ ω
+```
+
+That combined `(dgx, dgy)` runs through the *same* yield-stress + joint-budget
+path as gravity, so only mobile wet paint above the film flings out, and the
+step stays conservative no matter how hard you spin. Gravity and spin add, so a
+tilted spinning canvas both runs *and* flings. Because centrifugal force is
+defined in the canvas plane it needs **no tilt projection** (unlike gravity).
+(Verified in `centrifugal_test`: an off-centre blob migrates to the rim, a
+centred blob flings into a ring while its centroid stays pinned at the pivot,
+mass exactly conserved.)
 
 ### Drying — volume-dependent
 
@@ -264,6 +289,8 @@ is an exact **inverse homography** — round-trip verified in `slab_view_test`.
 | | gravityStrength | 1.0 | drip speed |
 | | dripYield | 0.07 | surface-tension threshold (drip start) |
 | | dripWander | 0.4 | lateral meander so drips aren't identical |
+| | spinning | off | centrifugal spin — flings wet paint to the rim |
+| | spinRate | 1.5 | spin speed; sign sets direction (spiral handedness) |
 | Canvas | canvasAmplitude | 0.08 | substrate tooth depth |
 | | canvasThicknessFrac | 0.06 | slab edge thickness |
 | Light | occlusion / gloss / fill / saturation | 0.6 / 0.5 / 0.4 / 1.18 | material |

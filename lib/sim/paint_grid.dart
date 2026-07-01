@@ -367,8 +367,16 @@ class PaintGrid {
       double gravX = 0,
       double gravY = 0,
       double dripYield = 0.0,
-      double dripWander = 0.0}) {
-    final bool grav = gravX != 0 || gravY != 0;
+      double dripWander = 0.0,
+      double spinCf = 0.0,
+      double spinCor = 0.0,
+      double spinCx = 0.0,
+      double spinCy = 0.0}) {
+    // Spin adds a position-dependent body force: centrifugal (spinCf, outward
+    // ∝ radius) flings paint to the rim, Coriolis (spinCor, tangential, signed)
+    // curls the outward streaks into spirals like real spin art.
+    final bool spin = spinCf != 0 || spinCor != 0;
+    final bool grav = gravX != 0 || gravY != 0 || spin;
     if (!_hasWet || (flow <= 0 && !grav)) return;
     // Lateral wander magnitude (cells) — a smooth noise field nudges drips
     // left/right as they fall so they meander and aren't identical.
@@ -440,31 +448,44 @@ class PaintGrid {
           if (hi > hd) oD = kw * (hi - hd);
         }
 
-        // Gravity (yield-stress): only paint ABOVE the holding film
+        // Body force (yield-stress): only paint ABOVE the holding film
         // (thickness − yld) is mobile; it slides into the downstream
-        // neighbour(s), leaving the film behind. Thin paint holds.
+        // neighbour(s), leaving the film behind. Thin paint holds. The drift
+        // vector is uniform gravity plus — when the canvas is spinning — a
+        // position-dependent centrifugal (outward from the pivot) and Coriolis
+        // (tangential) term.
         double gX = 0, gY = 0;
         int gXj = i, gYj = i;
         if (grav) {
           final double mobile = hi - yld;
           if (mobile > 0) {
             final double wi = weti / visc; // viscous paint runs slower
-            // Smooth low-frequency wander so the drip meanders left/right as it
-            // falls instead of running dead-straight.
-            double gxc = gravX;
+            double dgx = gravX;
+            double dgy = gravY;
+            if (spin) {
+              final double rx = x - spinCx;
+              final double ry = y - spinCy;
+              // Centrifugal ∝ ω²·r pushes straight out; Coriolis ∝ ω is
+              // perpendicular, so the outward run curls into a spiral (its sign
+              // is the spin direction).
+              dgx += spinCf * rx + spinCor * ry;
+              dgy += spinCf * ry - spinCor * rx;
+            }
+            // Smooth low-frequency wander so drips meander instead of running
+            // dead-straight.
             if (wander > 0) {
               final double nz = valueNoise(x * 0.03 + dripPhase, y * 0.06);
-              gxc += (nz - 0.5) * 2.0 * wander;
+              dgx += (nz - 0.5) * 2.0 * wander;
             }
-            final double gcap = mobile * 0.7; // gravity alone keeps the film
-            if (gxc != 0) {
-              gXj = gxc > 0 ? i + 1 : i - 1;
-              gX = gxc.abs() * mobile * wi;
+            final double gcap = mobile * 0.7; // body force alone keeps the film
+            if (dgx != 0) {
+              gXj = dgx > 0 ? i + 1 : i - 1;
+              gX = dgx.abs() * mobile * wi;
               if (gX > gcap) gX = gcap;
             }
-            if (gravY != 0) {
-              gYj = gravY > 0 ? i + width : i - width;
-              gY = gravY.abs() * mobile * wi;
+            if (dgy != 0) {
+              gYj = dgy > 0 ? i + width : i - width;
+              gY = dgy.abs() * mobile * wi;
               if (gY > gcap) gY = gcap;
             }
           }
