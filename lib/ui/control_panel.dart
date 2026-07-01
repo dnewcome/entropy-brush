@@ -11,6 +11,9 @@ class _Pigment {
       255, (r * 255).round(), (g * 255).round(), (b * 255).round());
 }
 
+/// Height of a single pigment swatch — the mixing palette matches it.
+const double _swatchHeight = 40;
+
 const _pigments = <_Pigment>[
   _Pigment('Ultramarine', 0.12, 0.20, 0.62),
   _Pigment('Cadmium Red', 0.78, 0.12, 0.10),
@@ -77,7 +80,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: iso-default · 06-24 #29',
+            child: const Text('build: palette-strip · 06-24 #30',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -101,7 +104,7 @@ class _ControlPanelState extends State<ControlPanel> {
           const Text('press & hold to squeeze paint · drag to spread & mix',
               style: TextStyle(fontSize: 10, color: Colors.white30)),
           const SizedBox(height: 8),
-          PaletteCanvas(controller: c),
+          PaletteCanvas(controller: c, height: _swatchHeight),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -613,7 +616,7 @@ class _Swatch extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 56,
-        height: 40,
+        height: _swatchHeight,
         decoration: BoxDecoration(
           color: pigment.color,
           borderRadius: BorderRadius.circular(6),

@@ -6,9 +6,12 @@ import 'paint_canvas.dart';
 /// The mixing palette: drag the current pigment on to blend colours, then load
 /// the brush from the mix. Flat-lit (it's about colour, not relief).
 class PaletteCanvas extends StatelessWidget {
-  const PaletteCanvas({super.key, required this.controller});
+  const PaletteCanvas({super.key, required this.controller, this.height = 40});
 
   final PaintController controller;
+
+  /// Fixed display height (a full-width strip). Matches the pigment swatches.
+  final double height;
 
   void _at(Offset local, Size size, void Function(double, double) fn) {
     final gx = (local.dx / size.width * controller.palette.width)
@@ -20,8 +23,9 @@ class PaletteCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
+    return SizedBox(
+      height: height,
+      width: double.infinity,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = Size(constraints.maxWidth, constraints.maxHeight);
