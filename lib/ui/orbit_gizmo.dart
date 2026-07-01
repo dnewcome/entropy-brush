@@ -19,29 +19,25 @@ class OrbitGizmo extends StatelessWidget {
     final double dx = ((local.dx - c) / c).clamp(-1.0, 1.0);
     final double dy = ((local.dy - c) / c).clamp(-1.0, 1.0);
     controller.tiltY = dx * range; // horizontal drag → yaw
-    controller.tiltX = dy * range; // vertical drag → pitch
+    controller.tiltX = -dy * range; // vertical drag → pitch (up = tilt toward you)
     controller.viewChanged();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Orbit — drag to tilt, double-tap to reset',
-      waitDuration: const Duration(milliseconds: 600),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onPanStart: (d) => _set(d.localPosition),
-        onPanUpdate: (d) => _set(d.localPosition),
-        onDoubleTap: () {
-          controller.tiltX = 0;
-          controller.tiltY = 0;
-          controller.viewChanged();
-        },
-        child: SizedBox(
-          width: diameter,
-          height: diameter,
-          child: CustomPaint(painter: _OrbitPainter(controller)),
-        ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onPanStart: (d) => _set(d.localPosition),
+      onPanUpdate: (d) => _set(d.localPosition),
+      onDoubleTap: () {
+        controller.tiltX = PaintController.defaultTiltX;
+        controller.tiltY = PaintController.defaultTiltY;
+        controller.viewChanged();
+      },
+      child: SizedBox(
+        width: diameter,
+        height: diameter,
+        child: CustomPaint(painter: _OrbitPainter(controller)),
       ),
     );
   }
@@ -58,53 +54,49 @@ class ZoomControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Zoom',
-      waitDuration: const Duration(milliseconds: 600),
-      child: Container(
-        width: 34,
-        height: 168,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xCC1C1C20),
-          borderRadius: BorderRadius.circular(17),
-          border: Border.all(color: const Color(0xFF55555C), width: 1),
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.zoom_in, size: 15, color: Color(0xFF99AACC)),
-            Expanded(
-              child: RotatedBox(
-                quarterTurns: 3, // horizontal slider → vertical, min at bottom
-                child: AnimatedBuilder(
-                  animation: controller,
-                  builder: (context, _) => SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      trackHeight: 3,
-                      thumbShape:
-                          const RoundSliderThumbShape(enabledThumbRadius: 7),
-                      overlayShape:
-                          const RoundSliderOverlayShape(overlayRadius: 14),
-                      activeTrackColor: const Color(0xFF3A86FF),
-                      inactiveTrackColor: const Color(0xFF44444C),
-                      thumbColor: Colors.white,
-                    ),
-                    child: Slider(
-                      min: minZoom,
-                      max: maxZoom,
-                      value: controller.zoom.clamp(minZoom, maxZoom),
-                      onChanged: (v) {
-                        controller.zoom = v;
-                        controller.viewChanged();
-                      },
-                    ),
+    return Container(
+      width: 34,
+      height: 168,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xCC1C1C20),
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: const Color(0xFF55555C), width: 1),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.zoom_in, size: 15, color: Color(0xFF99AACC)),
+          Expanded(
+            child: RotatedBox(
+              quarterTurns: 3, // horizontal slider → vertical, min at bottom
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) => SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3,
+                    thumbShape:
+                        const RoundSliderThumbShape(enabledThumbRadius: 7),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 14),
+                    activeTrackColor: const Color(0xFF3A86FF),
+                    inactiveTrackColor: const Color(0xFF44444C),
+                    thumbColor: Colors.white,
+                  ),
+                  child: Slider(
+                    min: minZoom,
+                    max: maxZoom,
+                    value: controller.zoom.clamp(minZoom, maxZoom),
+                    onChanged: (v) {
+                      controller.zoom = v;
+                      controller.viewChanged();
+                    },
                   ),
                 ),
               ),
             ),
-            const Icon(Icons.zoom_out, size: 15, color: Color(0xFF99AACC)),
-          ],
-        ),
+          ),
+          const Icon(Icons.zoom_out, size: 15, color: Color(0xFF99AACC)),
+        ],
       ),
     );
   }
@@ -147,7 +139,9 @@ class _OrbitPainter extends CustomPainter {
     // Knob showing current orientation.
     final Offset knob = Offset(
       ctr.dx + (yaw / OrbitGizmo.range).clamp(-1.0, 1.0) * r * 0.78,
-      ctr.dy + (pitch / OrbitGizmo.range).clamp(-1.0, 1.0) * r * 0.78,
+      // Pitch is inverted (drag up = tilt toward you), so mirror the knob's
+      // vertical so it still sits under the finger.
+      ctr.dy - (pitch / OrbitGizmo.range).clamp(-1.0, 1.0) * r * 0.78,
     );
     canvas.drawCircle(knob, 5.5, Paint()..color = Colors.white);
     canvas.drawCircle(

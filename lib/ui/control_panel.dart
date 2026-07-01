@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: vertical-zoom · 06-24 #28',
+            child: const Text('build: iso-default · 06-24 #29',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -362,8 +362,8 @@ class _ControlPanelState extends State<ControlPanel> {
             alignment: Alignment.centerLeft,
             child: TextButton(
               onPressed: () {
-                c.tiltX = 0;
-                c.tiltY = 0;
+                c.tiltX = PaintController.defaultTiltX;
+                c.tiltY = PaintController.defaultTiltY;
                 c.zoom = 1.0;
                 c.panX = 0;
                 c.panY = 0;

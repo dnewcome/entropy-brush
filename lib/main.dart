@@ -52,6 +52,8 @@ class _HomePageState extends State<HomePage>
     await controller.attachRenderer();
     // Start with pigment A loaded so the first stroke paints.
     controller.setPigment(0.12, 0.20, 0.62);
+    // Default to infinite paint on — never run dry unless the user turns it off.
+    controller.brush.config.infiniteLoad = true;
     controller.reloadBrush();
     if (mounted) setState(() {});
   }

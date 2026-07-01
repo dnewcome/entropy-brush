@@ -61,8 +61,12 @@ class PaintController extends ChangeNotifier {
   }
 
   // --- view: tilt, zoom, pan ---
-  double tiltX = 0.0; // pitch, radians
-  double tiltY = 0.0; // yaw, radians
+  // Slight isometric default so the canvas reads as 3D from first load (and on
+  // Reset view). tiltX > 0 makes the top edge recede, like it's on a table.
+  static const double defaultTiltX = 0.5;
+  static const double defaultTiltY = 0.38;
+  double tiltX = defaultTiltX; // pitch, radians
+  double tiltY = defaultTiltY; // yaw, radians
   double perspective = 0.0012;
   double zoom = 1.0;
   double panX = 0.0;
