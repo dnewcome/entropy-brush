@@ -552,7 +552,13 @@ class PaintController extends ChangeNotifier {
     final bool doFlow = flowRate > 0.01;
     final bool directional = gravityDrips || spinning;
     if (doFlow || directional) {
-      final int iters = doFlow ? math.max(1, (flowRate * 6).round()) : 1;
+      int iters = doFlow ? math.max(1, (flowRate * 6).round()) : 1;
+      // Fast spin needs more flow substeps per frame: each substep can only
+      // move a bounded fraction of a cell's paint (the conservation cap), so
+      // more substeps = paint reaches the rim in fewer frames.
+      if (spinning) {
+        iters = math.max(iters, math.min(16, (2 + spinSpeed * 2.0).round()));
+      }
       final double sdt = dt / iters;
       // With a directional body force on (gravity or spin), drop the isotropic
       // leveling way down so paint RUNS/FLINGS instead of bleeding out evenly.
@@ -574,8 +580,11 @@ class PaintController extends ChangeNotifier {
       double spinCf = 0, spinCor = 0, spinCx = 0, spinCy = 0;
       if (spinning) {
         final double w = spinSpeed * (spinCW ? -1.0 : 1.0);
-        spinCf = 0.02 * w * w / iters;
-        spinCor = 0.010 * w / iters;
+        // Stronger coefficient so paint saturates the per-step cap and flings
+        // out quickly; combined with the extra substeps above this makes high
+        // spin speeds dramatic while staying conservative.
+        spinCf = 0.06 * w * w / iters;
+        spinCor = 0.025 * w / iters;
         spinCx = grid.width / 2.0;
         spinCy = grid.height / 2.0;
       }

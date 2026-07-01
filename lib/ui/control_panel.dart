@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: pour-mode · 06-24 #23',
+            child: const Text('build: faster-spin · 06-24 #24',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -260,7 +260,7 @@ class _ControlPanelState extends State<ControlPanel> {
               onChanged: (v) => setState(() => c.spinning = v),
             ),
           ),
-          _slider('Spin speed', c.spinSpeed, 0.0, 3.0, (v) => c.spinSpeed = v),
+          _slider('Spin speed', c.spinSpeed, 0.0, 6.0, (v) => c.spinSpeed = v),
           AnimatedBuilder(
             animation: c,
             builder: (context, _) => SwitchListTile(
