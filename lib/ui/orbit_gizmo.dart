@@ -47,6 +47,65 @@ class OrbitGizmo extends StatelessWidget {
   }
 }
 
+/// Compact zoom slider that sits under the orbit gizmo. Mirrors scroll-wheel
+/// zoom (controller.zoom, 0.5–12×) so it stays in sync when you scroll.
+class ZoomControl extends StatelessWidget {
+  const ZoomControl({super.key, required this.controller});
+
+  final PaintController controller;
+
+  static const double minZoom = 0.5, maxZoom = 12.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Zoom',
+      waitDuration: const Duration(milliseconds: 600),
+      child: Container(
+        width: OrbitGizmo.diameter,
+        height: 26,
+        padding: const EdgeInsets.only(left: 6, right: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xCC1C1C20),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: const Color(0xFF55555C), width: 1),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.zoom_in, size: 13, color: Color(0xFF99AACC)),
+            Expanded(
+              child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) => SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 2,
+                    thumbShape:
+                        const RoundSliderThumbShape(enabledThumbRadius: 5),
+                    overlayShape:
+                        const RoundSliderOverlayShape(overlayRadius: 10),
+                    activeTrackColor: const Color(0xFF3A86FF),
+                    inactiveTrackColor: const Color(0xFF44444C),
+                    thumbColor: Colors.white,
+                  ),
+                  child: Slider(
+                    min: minZoom,
+                    max: maxZoom,
+                    value: controller.zoom.clamp(minZoom, maxZoom),
+                    onChanged: (v) {
+                      controller.zoom = v;
+                      controller.viewChanged();
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _OrbitPainter extends CustomPainter {
   _OrbitPainter(this.c) : super(repaint: c);
   final PaintController c;

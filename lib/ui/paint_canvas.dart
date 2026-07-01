@@ -103,7 +103,14 @@ class PaintCanvas extends StatelessWidget {
                   Positioned(
                     top: 10,
                     right: 10,
-                    child: OrbitGizmo(controller: controller),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        OrbitGizmo(controller: controller),
+                        const SizedBox(height: 8),
+                        ZoomControl(controller: controller),
+                      ],
+                    ),
                   ),
                 ],
               );

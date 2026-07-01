@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: web-ready · 06-24 #26',
+            child: const Text('build: zoom-slider · 06-24 #27',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
