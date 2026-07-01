@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: faster-spin · 06-24 #24',
+            child: const Text('build: spin-rotates-canvas · 06-24 #25',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -368,6 +368,7 @@ class _ControlPanelState extends State<ControlPanel> {
                 c.panX = 0;
                 c.panY = 0;
                 c.canvasRoll = 0;
+                c.resetSpin();
                 c.viewChanged();
                 setState(() {});
               },

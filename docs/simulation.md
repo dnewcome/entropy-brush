@@ -234,6 +234,14 @@ path as gravity, so only mobile wet paint above the film flings out, and the
 step stays conservative no matter how hard you spin. Gravity and spin add, so a
 tilted spinning canvas both runs *and* flings. Because centrifugal force is
 defined in the canvas plane it needs **no tilt projection** (unlike gravity).
+
+The canvas also **visibly rotates** while spinning: a live `_spinAngle`
+accumulates at the spin rate and rides on top of the user's `canvasRoll`
+(`displayRoll = canvasRoll + _spinAngle`), used for both projection and pointer
+mapping so the fling is tied to a turning canvas rather than paint sliding on a
+still one. Speed and substep count scale with the rate so higher speeds fling
+faster (each flow substep can only move a bounded fraction of a cell — the
+conservation cap — so more substeps per frame = paint reaches the rim sooner).
 (Verified in `centrifugal_test`: an off-centre blob migrates to the rim, a
 centred blob flings into a ring while its centroid stays pinned at the pivot,
 mass exactly conserved.)

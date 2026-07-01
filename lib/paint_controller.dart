@@ -68,6 +68,18 @@ class PaintController extends ChangeNotifier {
   double panX = 0.0;
   double panY = 0.0;
   double canvasRoll = 0.0; // in-plane spin of the canvas (radians)
+  double _spinAngle = 0.0; // live rotation accumulated while spinning
+
+  /// The canvas orientation actually shown: the user's set roll plus whatever
+  /// the live spin has wound up. Used for both projection and pointer mapping
+  /// so clicks still land correctly on the spinning canvas.
+  double get displayRoll => canvasRoll + _spinAngle;
+
+  /// Clear the accumulated live spin (canvas returns to its set roll).
+  void resetSpin() {
+    _spinAngle = 0.0;
+    notifyListeners();
+  }
 
   void viewChanged() => notifyListeners();
 
@@ -565,13 +577,14 @@ class PaintController extends ChangeNotifier {
       final double flowK = !doFlow ? 0.0 : (directional ? 0.03 : 0.2);
       // World-down gravity projected onto the tilted canvas plane → a drip
       // vector in grid coords. cos(tiltX) is full when face-on, zero when
-      // pitched flat; canvasRoll rotates the drip direction with the canvas.
+      // pitched flat; displayRoll (set roll + live spin) rotates the drip
+      // direction with the canvas as it turns.
       double gx = 0, gy = 0;
       if (gravityDrips) {
         final double mag = math.cos(tiltX);
         final double base = 1.3 * gravityStrength / iters;
-        gx = math.sin(canvasRoll) * mag * base;
-        gy = math.cos(canvasRoll) * mag * base;
+        gx = math.sin(displayRoll) * mag * base;
+        gy = math.cos(displayRoll) * mag * base;
       }
       // Centrifugal grows with ω² (outward), Coriolis with ω (tangential,
       // signed). Pivot is the canvas centre. Scaled so mid-radius paint
@@ -587,6 +600,10 @@ class PaintController extends ChangeNotifier {
         spinCor = 0.025 * w / iters;
         spinCx = grid.width / 2.0;
         spinCy = grid.height / 2.0;
+        // Actually turn the canvas on screen at the same rate, so the outward
+        // fling is visibly tied to a spinning canvas (not paint drifting on a
+        // still one). Wrapped to stay bounded over long sessions.
+        _spinAngle = (_spinAngle + w * 2.0 * dt) % (2 * math.pi);
       }
       for (int it = 0; it < iters; it++) {
         grid.flowStep(sdt,
@@ -606,6 +623,9 @@ class PaintController extends ChangeNotifier {
 
     if (grid.isDirty) _requestReliefImage();
     if (palette.isDirty) _requestPaletteUpload();
+    // Keep the view turning while spinning even if no paint is moving (e.g. all
+    // dried) — the canvas orientation itself is animating.
+    if (spinning) notifyListeners();
   }
 
   bool _palUploading = false;
