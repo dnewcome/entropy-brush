@@ -200,6 +200,10 @@ class PaintController extends ChangeNotifier {
   void strokeStart(double gx, double gy, {double? pressure}) {
     final pr = pressure ?? _pressure;
     _rec(TwinOp(_now, TwinOpKind.down, x: gx, y: gy, pressure: pr));
+    if (pourMode) {
+      _pourStart(gx, gy);
+      return;
+    }
     _doStart(gx, gy, pr);
   }
 
@@ -212,11 +216,19 @@ class PaintController extends ChangeNotifier {
     final double dist =
         math.sqrt((gx - _lastX) * (gx - _lastX) + (gy - _lastY) * (gy - _lastY));
     _rec(TwinOp(_now, TwinOpKind.move, x: gx, y: gy, pressure: pr));
+    if (_pouring) {
+      _pourMove(gx, gy);
+      return;
+    }
     _doMove(gx, gy, pr, _dwell(dist, dt));
   }
 
   void strokeEnd() {
     _rec(TwinOp(_now, TwinOpKind.up));
+    if (_pouring) {
+      _pourEnd();
+      return;
+    }
     _doEnd();
   }
 
@@ -262,6 +274,44 @@ class PaintController extends ChangeNotifier {
     brush.end();
     _stroking = false;
     _hasLast = false;
+  }
+
+  // --- pour / squirt mode: flowing liquid paint straight onto the canvas ---
+  // No brush, no bristles, no drybrush gating: while the pen is down we keep
+  // laying a fully-wet bead at the pen tip that spreads, pools, and (with
+  // gravity/spin on) runs. The pen path is still a stroke, so it draws a
+  // continuous poured trail — like squeezing paint from a bottle.
+
+  bool pourMode = false; // user toggle: pen pours liquid instead of brushing
+  bool _pouring = false;
+  double _pourX = 0, _pourY = 0;
+  double _pourAccum = 0;
+  static const double _pourVolPerFrame = 0.9;
+  static const double _pourMaxRadius = 11.0;
+
+  void _pourStart(double gx, double gy) {
+    _pouring = true;
+    _pourAccum = 0;
+    _pourX = gx;
+    _pourY = gy;
+  }
+
+  void _pourMove(double gx, double gy) {
+    _pourX = gx;
+    _pourY = gy;
+  }
+
+  void _pourEnd() => _pouring = false;
+
+  /// Emit one frame's worth of liquid paint at the pen tip. The bead widens as
+  /// it flows (up to a cap) so a held pen mounds a puddle, and a moving pen
+  /// draws a thick wet trail. Full coverage → no tooth gating (it floods).
+  void _pour() {
+    _pourAccum += _pourVolPerFrame;
+    final double radius =
+        math.min(_pourMaxRadius, 4.0 + math.sqrt(_pourAccum) * 1.2);
+    grid.deposit(
+        _pourX, _pourY, radius, _pourVolPerFrame, _curR, _curG, _curB);
   }
 
   void clearCanvas() {
@@ -480,7 +530,8 @@ class PaintController extends ChangeNotifier {
   double dripYield = 0.07; // yield threshold: paint thinner than this won't drip
   double dripWander = 0.4; // lateral meander so drips aren't identical
   bool spinning = false; // centrifugal: spinning the canvas flings paint outward
-  double spinRate = 1.5; // signed spin speed (sign = direction; magnitude = rpm)
+  double spinSpeed = 1.5; // how fast the canvas spins (0 = stopped)
+  bool spinCW = false; // rotation direction (sets the spiral handedness)
   final Stopwatch _frameClock = Stopwatch()..start();
 
   /// Pump one frame: advance replay/squeeze, run wet-paint flow, then refresh
@@ -488,6 +539,7 @@ class PaintController extends ChangeNotifier {
   void frame() {
     if (_replaying) _advanceReplay();
     if (_squirting) _squirt();
+    if (_pouring) _pour();
 
     double dt = _frameClock.elapsedMicroseconds / 1e6;
     _frameClock
@@ -521,7 +573,7 @@ class PaintController extends ChangeNotifier {
       // flowStep keeps it conservative no matter how hard you spin.
       double spinCf = 0, spinCor = 0, spinCx = 0, spinCy = 0;
       if (spinning) {
-        final double w = spinRate;
+        final double w = spinSpeed * (spinCW ? -1.0 : 1.0);
         spinCf = 0.02 * w * w / iters;
         spinCor = 0.010 * w / iters;
         spinCx = grid.width / 2.0;

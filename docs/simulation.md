@@ -85,6 +85,19 @@ remaining load) — the classic origin of an end-of-stroke drip.
 > A more principled version (deposit ∝ *time-in-contact*) is on the roadmap; the
 > dwell-boost + terminal-pool are the current approximation.
 
+### Pour mode — no brush (`paint_controller.dart`)
+
+A toggle that bypasses the bristle brush entirely: while the pen is down it lays
+a **fully-wet liquid bead** at the pen tip every frame (`grid.deposit` with full
+coverage, so no drybrush tooth gating). Held in place the bead widens to a cap
+and mounds a puddle; moving, it draws a thick wet trail — like squeezing paint
+straight from the bottle. Because the paint lands wet, it immediately obeys wet
+flow: it self-levels, and with **gravity drips** or **spin** on it runs or
+flings. Its runniness is the medium's (Viscosity / Flow), so a runny profile
+pours like ink and a stiff one like a thick ribbon. The pen path is still
+recorded as a stroke, so the poured toolpath is captured for the twin (the
+poured *deposition* is not yet reproduced on replay — a known gap).
+
 ---
 
 ## 2. The paint grid (`sim/paint_grid.dart`)
@@ -279,6 +292,7 @@ is an exact **inverse homography** — round-trip verified in `slab_view_test`.
 | | bristleLength | 9 | contact-segment length (flatten) |
 | | displacement | 0.15 | trailing-tip plowing |
 | | dwellBuildup | 1.2 | velocity → extra volume (drip cause) |
+| | pourMode | off | pen pours wet liquid paint, no brush |
 | Paint | body | 1.0 | pile height / opacity |
 | | viscosity | 1.0 | flow resistance: slower leveling, higher drip yield, slower drips |
 | | lumpiness | 0.25 | tooth/clump texture |
@@ -290,7 +304,8 @@ is an exact **inverse homography** — round-trip verified in `slab_view_test`.
 | | dripYield | 0.07 | surface-tension threshold (drip start) |
 | | dripWander | 0.4 | lateral meander so drips aren't identical |
 | | spinning | off | centrifugal spin — flings wet paint to the rim |
-| | spinRate | 1.5 | spin speed; sign sets direction (spiral handedness) |
+| | spinSpeed | 1.5 | how fast the canvas spins (0 = stopped) |
+| | spinCW | off | spin direction (flips the spiral handedness) |
 | Canvas | canvasAmplitude | 0.08 | substrate tooth depth |
 | | canvasThicknessFrac | 0.06 | slab edge thickness |
 | Light | occlusion / gloss / fill / saturation | 0.6 / 0.5 / 0.4 / 1.18 | material |

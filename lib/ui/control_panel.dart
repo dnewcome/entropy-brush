@@ -77,7 +77,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: centrifugal-spin · 06-24 #22',
+            child: const Text('build: pour-mode · 06-24 #23',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -179,6 +179,19 @@ class _ControlPanelState extends State<ControlPanel> {
               });
             },
           ),
+          AnimatedBuilder(
+            animation: c,
+            builder: (context, _) => SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: const Text('Pour mode (no brush)',
+                  style: TextStyle(fontSize: 13)),
+              subtitle: const Text('pen down pours flowing liquid paint',
+                  style: TextStyle(fontSize: 10, color: Colors.white38)),
+              value: c.pourMode,
+              onChanged: (v) => setState(() => c.pourMode = v),
+            ),
+          ),
 
           const SizedBox(height: 16),
           _heading('Brush'),
@@ -247,8 +260,19 @@ class _ControlPanelState extends State<ControlPanel> {
               onChanged: (v) => setState(() => c.spinning = v),
             ),
           ),
-          _slider('Spin rate (± = direction)', c.spinRate, -3.0, 3.0,
-              (v) => c.spinRate = v),
+          _slider('Spin speed', c.spinSpeed, 0.0, 3.0, (v) => c.spinSpeed = v),
+          AnimatedBuilder(
+            animation: c,
+            builder: (context, _) => SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: const Text('Clockwise', style: TextStyle(fontSize: 13)),
+              subtitle: const Text('spin direction (flips the spiral)',
+                  style: TextStyle(fontSize: 10, color: Colors.white38)),
+              value: c.spinCW,
+              onChanged: (v) => setState(() => c.spinCW = v),
+            ),
+          ),
 
           const SizedBox(height: 16),
           _heading('Paint'),
