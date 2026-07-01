@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
+import 'udp_receiver.dart';
 
 /// Receives hand-tracking packets from the Python webcam sidecar over UDP and
 /// turns them into strokes on the input seam. This is the same shape a
@@ -31,26 +32,25 @@ class CameraInput {
   /// EMA factor for the noisy landmark position (0 = frozen, 1 = no smoothing).
   final double smoothing;
 
-  RawDatagramSocket? _socket;
+  UdpReceiver? _receiver;
 
   bool _down = false;
   bool _have = false;
   double _sx = 0, _sy = 0;
 
   Future<void> start() async {
-    _socket = await RawDatagramSocket.bind(InternetAddress.loopbackIPv4, port);
-    _socket!.listen((event) {
-      if (event != RawSocketEvent.read) return;
-      Datagram? dg;
-      while ((dg = _socket!.receive()) != null) {
+    final r = UdpReceiver(
+      port: port,
+      onData: (data) {
         try {
-          final j = json.decode(utf8.decode(dg!.data)) as Map<String, dynamic>;
-          ingest(j);
+          ingest(json.decode(utf8.decode(data)) as Map<String, dynamic>);
         } catch (_) {
           // ignore malformed packets
         }
-      }
-    });
+      },
+    );
+    await r.start();
+    _receiver = r;
   }
 
   Future<void> stop() async {
@@ -58,8 +58,8 @@ class CameraInput {
       onEnd();
       _down = false;
     }
-    _socket?.close();
-    _socket = null;
+    await _receiver?.stop();
+    _receiver = null;
     _have = false;
   }
 

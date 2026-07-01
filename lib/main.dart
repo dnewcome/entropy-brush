@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
-import 'demo.dart';
 import 'paint_controller.dart';
 import 'ui/control_panel.dart';
 import 'ui/paint_canvas.dart';
@@ -55,10 +52,6 @@ class _HomePageState extends State<HomePage>
     controller.setPigment(0.12, 0.20, 0.62);
     controller.reloadBrush();
     if (mounted) setState(() {});
-
-    if (Platform.environment['ENTROPY_DEMO'] == '1') {
-      await runDemo(controller);
-    }
   }
 
   @override

@@ -1,0 +1,25 @@
+# DigitalOcean App Platform spec. Builds the Dockerfile (Flutter web → nginx)
+# and serves it at entropybrush.art with managed TLS. Auto-deploys on push to
+# main. Create with:  doctl apps create --spec .do/app.yaml
+name: entropybrush
+region: nyc
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    source_dir: /
+    github:
+      repo: dnewcome/entropy-brush
+      branch: main
+      deploy_on_push: true
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    health_check:
+      http_path: /
+    routes:
+      - path: /
+domains:
+  - domain: entropybrush.art
+    type: PRIMARY
+  - domain: www.entropybrush.art
+    type: ALIAS

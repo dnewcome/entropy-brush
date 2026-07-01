@@ -1,0 +1,15 @@
+.git
+.dart_tool
+build
+.idea
+.vscode
+linux
+macos
+windows
+android
+ios
+.claude
+*.md
+docs
+tools
+test

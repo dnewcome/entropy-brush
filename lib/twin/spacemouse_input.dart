@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+
+import 'udp_receiver.dart';
 
 /// Receives 3Dconnexion SpaceMouse 6DOF state from the Python sidecar over UDP.
 /// The axes are continuous displacements (-1..1 while held); the controller
@@ -11,7 +12,7 @@ class SpaceMouseInput {
   SpaceMouseInput({this.port = 5006});
   final int port;
 
-  RawDatagramSocket? _socket;
+  UdpReceiver? _receiver;
 
   // Latest axis state (translation x/y/z, rotation roll/pitch/yaw), deadzoned.
   double tx = 0, ty = 0, tz = 0;
@@ -22,23 +23,23 @@ class SpaceMouseInput {
   double _dz(double v) => v.abs() < _deadzone ? 0.0 : v;
 
   Future<void> start() async {
-    _socket = await RawDatagramSocket.bind(InternetAddress.loopbackIPv4, port);
-    _socket!.listen((event) {
-      if (event != RawSocketEvent.read) return;
-      Datagram? dg;
-      while ((dg = _socket!.receive()) != null) {
+    final r = UdpReceiver(
+      port: port,
+      onData: (data) {
         try {
-          ingest(json.decode(utf8.decode(dg!.data)) as Map<String, dynamic>);
+          ingest(json.decode(utf8.decode(data)) as Map<String, dynamic>);
         } catch (_) {
           // ignore malformed packets
         }
-      }
-    });
+      },
+    );
+    await r.start();
+    _receiver = r;
   }
 
   Future<void> stop() async {
-    _socket?.close();
-    _socket = null;
+    await _receiver?.stop();
+    _receiver = null;
     tx = ty = tz = rx = ry = rz = 0;
     button0 = button1 = false;
   }
