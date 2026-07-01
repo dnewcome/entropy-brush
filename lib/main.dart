@@ -104,18 +104,37 @@ class _HomePageState extends State<HomePage>
                   padding: const EdgeInsets.all(8),
                   child: PaintCanvas(controller: controller),
                 ),
-                // Tap to reveal the controls drawer.
+                // A pull-tab on the right edge signals the controls drawer and
+                // opens it on tap (edge-swipe still works too).
                 Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Builder(
-                    builder: (context) => FloatingActionButton.small(
-                      heroTag: 'controls',
-                      backgroundColor: const Color(0xCC1C1C20),
-                      foregroundColor: Colors.white,
-                      tooltip: 'Controls',
-                      onPressed: () => Scaffold.of(context).openEndDrawer(),
-                      child: const Icon(Icons.tune),
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Builder(
+                      builder: (context) => GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => Scaffold.of(context).openEndDrawer(),
+                        child: Container(
+                          width: 22,
+                          height: 80,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: Color(0xE61C1C20),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(11),
+                              bottomLeft: Radius.circular(11),
+                            ),
+                            border: Border(
+                              top: BorderSide(color: Color(0xFF55555C)),
+                              left: BorderSide(color: Color(0xFF55555C)),
+                              bottom: BorderSide(color: Color(0xFF55555C)),
+                            ),
+                          ),
+                          child: const Icon(Icons.chevron_left,
+                              size: 20, color: Color(0xFFBBBBC4)),
+                        ),
+                      ),
                     ),
                   ),
                 ),
