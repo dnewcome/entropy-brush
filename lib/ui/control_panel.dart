@@ -67,7 +67,7 @@ class _ControlPanelState extends State<ControlPanel> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
-          const Text('entropy-brush',
+          const Text('entropybrush',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           const Text('physically simulated bristles · impasto relief',
@@ -80,7 +80,7 @@ class _ControlPanelState extends State<ControlPanel> {
               color: Colors.teal.shade700,
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text('build: palette-strip · 06-24 #30',
+            child: const Text('build: entropybrush · 06-24 #31',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 16),
@@ -551,7 +551,7 @@ class _ControlPanelState extends State<ControlPanel> {
           ),
           const SizedBox(height: 6),
           const Text('GLB = colour mesh · STL = watertight solid (printing)\n'
-              'saved to ~/entropy-brush-exports',
+              'saved to ~/entropybrush-exports',
               style: TextStyle(fontSize: 10, color: Colors.white30)),
         ],
       ),

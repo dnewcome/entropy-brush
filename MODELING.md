@@ -1,7 +1,7 @@
 # MODELING.md — learning the brush/paint model from real data
 
 How we might replace (or augment) the hand-tuned brush–paint–canvas physics in
-entropy-brush with a model fit to **real** brushstrokes. This is a research
+entropybrush with a model fit to **real** brushstrokes. This is a research
 direction, gated on the paintbot hardware; captured here so the plan survives.
 
 ## What we'd be learning (three separable sub-problems)

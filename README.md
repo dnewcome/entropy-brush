@@ -1,4 +1,4 @@
-# entropy-brush
+# entropybrush
 
 A physics-based oil painting program in Flutter. Not a noise-smear paint app —
 the **brush is a real simulated object**, the **paint is a fluid** that piles,
@@ -15,7 +15,7 @@ recorded — can be replayed with real paint on real canvas.
 
 ## What makes it different
 
-Most paint programs drag a textured stamp along a path. entropy-brush simulates
+Most paint programs drag a textured stamp along a path. entropybrush simulates
 the actual *causes* of a brushstroke:
 
 - **Bristle brush, not a stamp.** The head carries dozens of individual bristles
@@ -57,7 +57,7 @@ the actual *causes* of a brushstroke:
 
 ## Exports
 
-All written to `~/entropy-brush-exports`:
+All written to `~/entropybrush-exports`:
 
 | Format | What | For |
 |---|---|---|
@@ -136,7 +136,7 @@ build you're running.
 
 ## Driving a machine
 
-entropy-brush is the painting + twin tool; the **paintbot hardware is a separate
+entropybrush is the painting + twin tool; the **paintbot hardware is a separate
 project**. The boundary is deliberate: this repo emits a **machine-agnostic
 performance artifact** (the `.json` print) and contains *no* kinematics,
 firmware, or G-code. A machine driver consumes that artifact and owns all

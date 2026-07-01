@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stream a 3Dconnexion SpaceMouse to entropy-brush over UDP.
+"""Stream a 3Dconnexion SpaceMouse to entropybrush over UDP.
 
 Backends:
   (default)   spacenavd socket (/run/spnav.sock)

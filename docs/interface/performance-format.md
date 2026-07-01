@@ -1,12 +1,12 @@
 # Performance format (`.json`) — the machine hand-off contract
 
-A **`TwinPerformance`** is entropy-brush's machine-agnostic description of a
+A **`TwinPerformance`** is entropybrush's machine-agnostic description of a
 painting: an ordered, timestamped list of brush operations. It is what a
 downstream machine driver (e.g. the separate paintbot/CNC project) consumes to
 reproduce the painting with real paint. See
 [ADR 0002](../adr/0002-machine-interface-boundary.md) for the boundary.
 
-Produced by **Record → Save print**; written to `~/entropy-brush-exports/print-*.json`.
+Produced by **Record → Save print**; written to `~/entropybrush-exports/print-*.json`.
 
 ## Top-level
 
@@ -54,7 +54,7 @@ Each op has a time `t` (seconds from start) and a `kind`:
 ## Driver guidance (paintbot side)
 
 A minimal driver walks the ops in order and:
-1. On `reload`, route to the matching paint well and recharge (entropy-brush's
+1. On `reload`, route to the matching paint well and recharge (entropybrush's
    load model predicts *when* a reload is needed; the well location is yours).
 2. On `down`/`move`, position `(x,y)` (scaled to mm) and set Z/force from `p`.
 3. On `up`, lift.
@@ -64,7 +64,7 @@ Notes:
   its planner's segment length.
 - `t` is wall-clock from recording; use it for pacing if desired, or ignore and
   run at the machine's own feedrate.
-- Replaying these ops through entropy-brush's sim is **deterministic**, so the
+- Replaying these ops through entropybrush's sim is **deterministic**, so the
   `.json` fully and reproducibly specifies the intended painting.
 
 ## Versioning

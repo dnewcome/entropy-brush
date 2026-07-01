@@ -41,7 +41,7 @@ path (see "Future option").
 ## Rationale
 
 ### The physics is field-based
-The features that make entropy-brush distinctive all operate on a lattice with
+The features that make entropybrush distinctive all operate on a lattice with
 locality and neighbours:
 
 - **Wet-paint flow / leveling** — diffusion across neighbouring cells.

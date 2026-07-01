@@ -1,4 +1,4 @@
-# entropy-brush — kickoff brief
+# entropybrush — kickoff brief
 
 - **Problem:** Paint apps stamp textured dabs along a path → fake uniform streaks. We want marks that emerge from a *physically simulated brush* (moving bristles, finite paint load) piling and mixing real paint, to generate PNG + GLB relief assets for a downstream 3D pipeline.
 - **Done looks like:** On desktop, drag a brush across the canvas; individual bristles deflect and splay, lay down thick oil paint that piles into impasto relief, deplete their load as they go (drybrush/skip when starved), mix where strokes overlap, and catch an adjustable light — exportable as PNG (color) + GLB (relief mesh).

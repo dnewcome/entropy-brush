@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the entropy-brush hero/social image as an SVG.
+"""Generate the entropybrush hero/social image as an SVG.
 
 A spinning tilted disc (canvas) with spiral paint arms, a brush contacting it,
 and paint flinging off the rim in trailed droplets. Dark, on-brand.
@@ -163,7 +163,7 @@ add('<g transform="translate(0 -18) scale(0.5)">'
     '<path d="M18 0 C 22 9, 28 14, 28 20 A 10 10 0 1 1 8 20 C 8 14, 14 9, 18 0 Z" '
     'fill="#E23B6D"/></g>')
 add('<text x="42" y="0" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" '
-    'font-size="40" font-weight="700" fill="#f2f2f4" letter-spacing="0.5">entropy-brush</text>')
+    'font-size="40" font-weight="700" fill="#f2f2f4" letter-spacing="0.5">entropybrush</text>')
 add('<text x="44" y="30" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" '
     'font-size="19" fill="#9a9aa4" letter-spacing="0.3">physics-based painting</text>')
 add('</g>')

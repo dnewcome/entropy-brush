@@ -1,6 +1,6 @@
 {
-    "name": "entropy-brush",
-    "short_name": "entropy-brush",
+    "name": "entropybrush",
+    "short_name": "entropybrush",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1A1A1D",

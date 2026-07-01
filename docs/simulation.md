@@ -1,6 +1,6 @@
 # The paint simulation
 
-A reference for how entropy-brush models a brush, paint, and a canvas. It's a
+A reference for how entropybrush models a brush, paint, and a canvas. It's a
 **height-field grid simulation** (`lib/sim`, Flutter-free) driven by an
 abstracted input seam, rendered by a GPU relief shader, and recorded as a
 deterministic op stream. This documents the model and the constants; the code is

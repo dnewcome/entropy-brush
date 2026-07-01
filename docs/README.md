@@ -1,6 +1,6 @@
 # Design docs
 
-Architecture Decision Records (ADRs) and design notes for entropy-brush.
+Architecture Decision Records (ADRs) and design notes for entropybrush.
 
 ## Reference
 
@@ -14,7 +14,7 @@ Architecture Decision Records (ADRs) and design notes for entropy-brush.
   — why the paint stays a simulated height-field grid rather than moving to
   Gaussian splats, and how to get crisper zoom instead (higher resolution /
   stroke-vector re-render).
-- [0002 — entropy-brush ↔ paintbot machine boundary](adr/0002-machine-interface-boundary.md)
+- [0002 — entropybrush ↔ paintbot machine boundary](adr/0002-machine-interface-boundary.md)
   — the painting tool emits a machine-agnostic performance artifact; the
   separate paintbot project owns all hardware and consumes it.
 

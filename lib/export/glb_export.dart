@@ -119,7 +119,7 @@ Uint8List buildGlb(
   bin.setRange(posLen + colLen, binLen, idxBytes);
 
   final gltf = {
-    'asset': {'version': '2.0', 'generator': 'entropy-brush'},
+    'asset': {'version': '2.0', 'generator': 'entropybrush'},
     'scene': 0,
     'scenes': [
       {'nodes': [0]}

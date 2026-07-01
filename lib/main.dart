@@ -17,7 +17,7 @@ class EntropyBrushApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'entropy-brush',
+      title: 'entropybrush',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true).copyWith(
         scaffoldBackgroundColor: const Color(0xFF1A1A1D),

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""entropy-brush webcam hand tracker.
+"""entropybrush webcam hand tracker.
 
 Tracks one hand with MediaPipe and streams brush input to the Flutter app over
 UDP. Pinch thumb + index together to "press the brush down"; the pinch midpoint
@@ -87,7 +87,7 @@ with mp_hands.Hands(
             (255, 255, 255),
             2,
         )
-        cv2.imshow("entropy-brush hand tracker", frame)
+        cv2.imshow("entropybrush hand tracker", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 

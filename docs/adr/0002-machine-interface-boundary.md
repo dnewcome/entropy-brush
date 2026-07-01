@@ -1,4 +1,4 @@
-# ADR 0002 — entropy-brush ↔ paintbot machine boundary
+# ADR 0002 — entropybrush ↔ paintbot machine boundary
 
 - **Status:** Accepted
 - **Date:** 2026-06-24
@@ -7,25 +7,25 @@
 ## Context
 
 The painting robot ("paintbot") — a brush-wielding CNC machine — is developed as
-a **separate project**. entropy-brush should be able to *drive* it, but the
+a **separate project**. entropybrush should be able to *drive* it, but the
 hardware scope must not leak into this repo. We need a clean boundary and a
 stable hand-off so the two projects can evolve independently.
 
 ## Decision
 
-**entropy-brush emits a machine-agnostic painting artifact; the paintbot project
+**entropybrush emits a machine-agnostic painting artifact; the paintbot project
 owns all hardware and consumes the artifact via a file hand-off.**
 
 - The artifact is the recorded **`TwinPerformance`** (`.json`), already produced
   by Record → Save print. It is *intent*, not motion: where the brush went, how
   hard, and in what colour, with timestamps and reload events. See the schema:
   [`docs/interface/performance-format.md`](../interface/performance-format.md).
-- **entropy-brush does NOT** contain kinematics, firmware, a G-code dialect,
+- **entropybrush does NOT** contain kinematics, firmware, a G-code dialect,
   Z/pressure-mechanism mapping, paint-well coordinates, or machine calibration.
 
 ## Responsibilities
 
-| Concern | entropy-brush | paintbot project |
+| Concern | entropybrush | paintbot project |
 |---|---|---|
 | Brush/paint simulation, the painting | ✅ | |
 | Machine-agnostic performance artifact (`.json`) | ✅ | |
@@ -44,8 +44,8 @@ owns all hardware and consumes the artifact via a file hand-off.**
   to execute it.
 - **Firmware/kinematics churn stays out.** grbl quirks, accel limits, well
   geometry, and Z-mechanism details change with the hardware; keeping them in the
-  hardware project means entropy-brush doesn't track them.
-- **The load model is reusable, not machine-specific.** entropy-brush predicts
+  hardware project means entropybrush doesn't track them.
+- **The load model is reusable, not machine-specific.** entropybrush predicts
   *when* the brush runs dry (reload events in the artifact); the paintbot decides
   *where* the well is and how to route there.
 
@@ -67,4 +67,4 @@ owns all hardware and consumes the artifact via a file hand-off.**
   self-describing (carries `gridSize` + `sizeMm`).
 - A G-code emitter, if built, lives in the **paintbot** project and reads this
   artifact — not here.
-- entropy-brush stays a painting + twin tool; the machine stays a machine.
+- entropybrush stays a painting + twin tool; the machine stays a machine.

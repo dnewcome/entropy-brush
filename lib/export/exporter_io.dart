@@ -10,12 +10,12 @@ import 'stl_export.dart';
 /// Writes PNG (shaded colour) and GLB (relief mesh) assets to a predictable
 /// export folder, returning the paths so the UI can report them.
 class Exporter {
-  /// Resolve (and create) the export directory: ~/entropy-brush-exports.
+  /// Resolve (and create) the export directory: ~/entropybrush-exports.
   static Directory exportDir() {
     final home = Platform.environment['HOME'] ??
         Platform.environment['USERPROFILE'] ??
         Directory.current.path;
-    final dir = Directory('$home/entropy-brush-exports');
+    final dir = Directory('$home/entropybrush-exports');
     if (!dir.existsSync()) dir.createSync(recursive: true);
     return dir;
   }
