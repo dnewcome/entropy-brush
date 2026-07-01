@@ -1,23 +1,23 @@
-# DigitalOcean App Platform spec. Builds the Dockerfile (Flutter web → nginx)
-# and serves it at entropybrush.art with managed TLS. Auto-deploys on push to
-# main. Create with:  doctl apps create --spec .do/app.yaml
+# DigitalOcean App Platform — free static site.
+#
+# DO has no Flutter buildpack, so the GitHub Action (.github/workflows/
+# deploy-web.yml) builds `flutter build web` and publishes the bundle to the
+# `web-deploy` branch. This static site just serves that branch's files (no
+# build step) and redeploys whenever the branch is pushed.
+#
+# Create with:  doctl apps create --spec .do/app.yaml
 name: entropybrush
 region: nyc
-services:
+static_sites:
   - name: web
-    dockerfile_path: Dockerfile
-    source_dir: /
     github:
       repo: dnewcome/entropy-brush
-      branch: main
+      branch: web-deploy
       deploy_on_push: true
-    http_port: 8080
-    instance_size_slug: apps-s-1vcpu-0.5gb
-    instance_count: 1
-    health_check:
-      http_path: /
-    routes:
-      - path: /
+    source_dir: /
+    # Single-page app: serve index.html for any unknown path.
+    catchall_document: index.html
+    index_document: index.html
 domains:
   - domain: entropybrush.art
     type: PRIMARY

@@ -1,0 +1,39 @@
+name: Deploy web
+
+# Build the Flutter web bundle and publish it to the `web-deploy` branch, which
+# DigitalOcean App Platform serves as a free static site. Runs on every push to
+# main (or manually).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.41.6
+          channel: stable
+
+      - run: flutter pub get
+      - run: flutter build web --release --base-href /
+
+      # Publish build/web to the web-deploy branch (single clean commit).
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          publish_branch: web-deploy
+          force_orphan: true
+          cname: entropybrush.art
